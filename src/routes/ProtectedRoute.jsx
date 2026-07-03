@@ -11,13 +11,28 @@ import checkPermission from '../RBAC/checkPermission.util';
  */
 
 export function ProtectedRoute({ requiredResource, requiredAction }) {
-  const { isAuthenticated, permissions } = useAuthStore();
+  const { isAuthenticated, permissions, user } = useAuthStore();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  console.log("location pathname: ",location.pathname);
+  console.log("user: ", user);
+  console.log("user.organization_id: ", user.org_id);
+
+  // 🔥 2. الفحص الجديد: لو مسجل دخول بس معندوش منظمة (ولم يذهب لصفحة الـ onboarding بعد)
+  // بافتراض إن الباك إند بيرجع الحقل ده باسم organization_id أو يمكنك تعديله حسب الـ Response
+  if (user && !user.org_id && location.pathname !== '/onboarding') {
+    console.log("done")
+    return <Navigate to="/onboarding" />;
+  }
+
   if (requiredResource && requiredAction && permissions) {
+    // console.log("Permissions:", permissions);
+    // console.log("Required Resource:", requiredResource);
+    // console.log("Required Action:", requiredAction);
+
     if (!checkPermission(permissions, requiredResource, requiredAction)) {
       return <Navigate to="/unauthorized" replace />;
     }
