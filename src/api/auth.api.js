@@ -42,5 +42,5 @@ export async function getCurrentUser() {
 // GET /rbac/mypermissions
 export async function getMyPermissions() {
   const { data } = await apiClient.get('/rbac/mypermissions');
-  return data; // UserPermissionsMatrixResponse
+  return data; // Returns: { user_id, org_id, role, department, permissions: { "employees": true, ... } }
 }

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import apiClient from '../api/Client'; // Your modular Axios client
+import apiClient from '../api/client'; // Your modular Axios client
 
 // Define validation rules using Zod (Zod v4 compatible check)
 const createOrgSchema = z.object({

@@ -4,6 +4,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
 import OnboardingPage from './layouts/OnboardingPage';
+import RolesPermissionsPage from './features/auth/pages/RolesPermissionsPage';
 
 // كمبوننت بسيط لعرض الصفحات اللي لسه متبنتش
 const Placeholder = ({ title }) => (
@@ -14,10 +15,10 @@ const Placeholder = ({ title }) => (
 );
 
 // دالة مساعدة سريعة (Helper) عشان نمنع تكرار الـ ProtectedRoute في كل سطر
-const protect = (resource, action, path, title) => ({
+const protect = (resource, path, title) => ({
   path,
   element: (
-    <ProtectedRoute requiredResource={resource} requiredAction={action}>
+    <ProtectedRoute requiredResource={resource}>
       <Placeholder title={title} />
     </ProtectedRoute>
   )
@@ -42,25 +43,32 @@ const router = createBrowserRouter([
           { path: '/dashboard', element: <Placeholder title="Dashboard" /> },
 
           // Inventory Section
-          protect('products', 'read', 'inventory/products', 'Products'),
-          protect('products', 'read', 'inventory/stock', 'Stock Levels'),
-          protect('products', 'read', 'inventory/suppliers', 'Suppliers'),
-          protect('products', 'read', 'inventory/purchase-orders', 'Purchase Orders'),
+          protect('products',        'inventory/products',        'Products'),
+          protect('inventory_stock', 'inventory/stock',           'Stock Levels'),
+          protect('suppliers',       'inventory/suppliers',       'Suppliers'),
+          protect('purchase_orders', 'inventory/purchase-orders', 'Purchase Orders'),
 
           // HR Section
-          protect('employees', 'read', 'hr/employees', 'Employees'),
-          protect('employees', 'read', 'hr/attendance', 'Attendance'),
-          protect('employees', 'read', 'hr/leave-requests', 'Leave Requests'),
-          protect('employees', 'read', 'hr/payroll', 'Payroll'),
+          protect('employees',     'hr/employees',     'Employees'),
+          protect('attendance',    'hr/attendance',    'Attendance'),
+          protect('leave_requests','hr/leave-requests','Leave Requests'),
+          protect('payroll',       'hr/payroll',       'Payroll'),
 
           // Sales Section
-          protect('sales_orders', 'read', 'sales/orders', 'Sales Orders'),
-          protect('sales_orders', 'read', 'sales/customers', 'Customers'),
-          protect('sales_orders', 'read', 'sales/returns', 'Returns'),
+          protect('sales_orders', 'sales/orders',    'Sales Orders'),
+          protect('customers',    'sales/customers', 'Customers'),
+          protect('returns',      'sales/returns',   'Returns'),
 
           // Admin Section
-          protect('roles', 'read', 'admin/roles', 'Roles & Permissions'),
-          protect('roles', 'read', 'admin/activity-logs', 'Activity Logs'),
+          {
+            path: 'admin/roles',
+            element: (
+              <ProtectedRoute requiredResource="users">
+                <RolesPermissionsPage />
+              </ProtectedRoute>
+            ),
+          },
+          protect('activity_logs', 'admin/activity-logs', 'Activity Logs'),
         ],
       },
     ],

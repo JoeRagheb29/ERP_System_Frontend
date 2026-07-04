@@ -5,38 +5,31 @@ import checkPermission from '../RBAC/checkPermission.util';
 /**
  * ProtectedRoute — Dual-purpose route guard.
  *
- * No props      → authentication gate only.
- * With props    → also enforces RBAC against the resolved permission matrix.
- * Org owners bypass ALL RBAC checks (mirrors backend logic exactly).
+ * No props       → authentication gate only (checks login + org membership).
+ * requiredResource → also checks the user's permission map for that table.
+ *
+ * Access is table-level: the backend returns { permissions: { "employees": true, ... } }.
+ * No action distinction — the endpoint logic handles read/write differentiation.
  */
 
-export function ProtectedRoute({ requiredResource, requiredAction }) {
+export function ProtectedRoute({ requiredResource, children }) {
   const { isAuthenticated, permissions, user } = useAuthStore();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  console.log("location pathname: ",location.pathname);
-  console.log("user: ", user);
-  console.log("user.organization_id: ", user.org_id);
-
-  // 🔥 2. الفحص الجديد: لو مسجل دخول بس معندوش منظمة (ولم يذهب لصفحة الـ onboarding بعد)
-  // بافتراض إن الباك إند بيرجع الحقل ده باسم organization_id أو يمكنك تعديله حسب الـ Response
+  // Redirect to onboarding if the user has no organization yet
   if (user && !user.org_id && location.pathname !== '/onboarding') {
-    console.log("done")
     return <Navigate to="/onboarding" />;
   }
 
-  if (requiredResource && requiredAction && permissions) {
-    // console.log("Permissions:", permissions);
-    // console.log("Required Resource:", requiredResource);
-    // console.log("Required Action:", requiredAction);
-
-    if (!checkPermission(permissions, requiredResource, requiredAction)) {
+  // Table-level permission check
+  if (requiredResource && permissions) {
+    if (!checkPermission(permissions, requiredResource)) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
 
-  return <Outlet />;
+  return children || <Outlet />;
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRegister } from '../hooks/useRegister';
+import { useRegister } from '../hooks/Useregister';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar, faUser, faEnvelope, faPhone, faLock, faEye,
         faEyeSlash, faExclamationCircle, faCheck,faTimes } from '@fortawesome/free-solid-svg-icons';
