@@ -1,4 +1,4 @@
-import { useAuthStore } from '../features/auth/store.js';
+import { useAuthStore } from '../store/auth.store';
 import checkPermission from './checkPermission.util.js';
 
 /**

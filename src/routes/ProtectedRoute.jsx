@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import checkPermission from '../RBAC/checkPermission.util';
 
@@ -11,28 +11,23 @@ import checkPermission from '../RBAC/checkPermission.util';
  */
 
 export function ProtectedRoute({ requiredResource, requiredAction }) {
-  const { isAuthenticated, permissions, user } = useAuthStore();
+  const { isAuthenticated, isInitializing, permissions, user } = useAuthStore();
+  const location = useLocation();
+
+  // Wait until initializeAuth() finishes before making any routing decision
+  if (isInitializing) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  console.log("location pathname: ",location.pathname);
-  console.log("user: ", user);
-  console.log("user.organization_id: ", user.org_id);
-
-  // 🔥 2. الفحص الجديد: لو مسجل دخول بس معندوش منظمة (ولم يذهب لصفحة الـ onboarding بعد)
-  // بافتراض إن الباك إند بيرجع الحقل ده باسم organization_id أو يمكنك تعديله حسب الـ Response
   if (user && !user.org_id && location.pathname !== '/onboarding') {
-    console.log("done")
-    return <Navigate to="/onboarding" />;
+    return <Navigate to="/onboarding" replace />;
   }
 
   if (requiredResource && requiredAction && permissions) {
-    // console.log("Permissions:", permissions);
-    // console.log("Required Resource:", requiredResource);
-    // console.log("Required Action:", requiredAction);
-
     if (!checkPermission(permissions, requiredResource, requiredAction)) {
       return <Navigate to="/unauthorized" replace />;
     }
