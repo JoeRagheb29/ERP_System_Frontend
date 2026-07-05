@@ -91,7 +91,7 @@ export default function Topbar() {
                 : user?.username}
             </p>
             <p className="text-[11px] text-slate-400 leading-none mt-0.5 capitalize">
-              {permissions?.role_name ?? 'Member'}
+              {permissions?.role ?? 'Member'}
             </p>
           </div>
         </div>

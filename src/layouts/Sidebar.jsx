@@ -51,7 +51,7 @@ const NAV_SECTIONS = [
   {
     label: 'Administration',
     items: [
-      { path: '/admin/roles',         label: 'Roles & Permissions', resource: 'roles',          icon: faShieldHalved },
+      { path: '/admin/roles',         label: 'Roles & Permissions', resource: 'users',          icon: faShieldHalved },
       { path: '/admin/activity-logs', label: 'Activity Logs',       resource: 'activity_logs',  icon: faListCheck },
     ],
   },
@@ -108,7 +108,7 @@ export default function Sidebar() {
         {NAV_SECTIONS.map((section, sIdx) => {
           // Filter items the user doesn't have permission to see
           const visibleItems = section.items.filter(
-            (item) => item.resource === null || checkPermission(permissions, item.resource, 'read')
+            (item) => item.resource === null || checkPermission(permissions, item.resource)
           );
 
           // If the whole section has no visible items, skip it entirely
@@ -145,7 +145,7 @@ export default function Sidebar() {
               {user?.first_name ? `${user.first_name} ${user.last_name ?? ''}`.trim() : user?.username}
             </p>
             <p className="text-slate-500 text-[11px] truncate capitalize">
-              {permissions?.role_name ?? 'Member'}
+              {permissions?.role ?? 'Member'}
             </p>
           </div>
         </div>

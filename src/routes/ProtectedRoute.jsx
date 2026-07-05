@@ -5,9 +5,11 @@ import checkPermission from '../RBAC/checkPermission.util';
 /**
  * ProtectedRoute — Dual-purpose route guard.
  *
- * No props      → authentication gate only.
- * With props    → also enforces RBAC against the resolved permission matrix.
- * Org owners bypass ALL RBAC checks (mirrors backend logic exactly).
+ * No props       → authentication gate only (checks login + org membership).
+ * requiredResource → also checks the user's permission map for that table.
+ *
+ * Access is table-level: the backend returns { permissions: { "employees": true, ... } }.
+ * No action distinction — the endpoint logic handles read/write differentiation.
  */
 
 export function ProtectedRoute({ requiredResource, requiredAction }) {
