@@ -72,8 +72,8 @@ export default function OnboardingPage() {
                 className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 rounded-xl hover:border-emerald-500 hover:bg-emerald-50/50 transition cursor-pointer text-center group"
               >
                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xl group-hover:bg-emerald-200">➔</div>
-                <h3 className="mt-4 text-lg font-semibold text-slate-800">Join Existing Organization</h3>
-                <p className="mt-1 text-xs text-slate-500">Enter an invite code sent by your workspace administrator</p>
+                <h3 className="mt-4 text-lg font-semibold text-slate-800">Wait for an Invitation</h3>
+                <p className="mt-1 text-xs text-slate-500">Wait for an invitation sent by your workspace administrator</p>
               </button>
             </div>
           )}
@@ -127,28 +127,12 @@ export default function OnboardingPage() {
           )}
 
           {/* Step 3: Form to Join via Invite Code */}
-          {step === 'join' && (
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Invite Code</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 text-slate-950"
-                  placeholder="Enter the unique alphanumeric code"
-                />
+          {step === 'join' && (<>  
+            <button type="button" onClick={() => setStep('choice')} className="text-sm text-slate-600 hover:underline">Back</button>
+            <div className="flex justify-between items-center text-center pt-2">
+                Wait for the admin to send you an invitation code. Once you receive it, enter it here to join the organization.
               </div>
-              <div className="flex justify-between items-center pt-2">
-                <button type="button" onClick={() => setStep('choice')} className="text-sm text-slate-600 hover:underline">Back</button>
-                <button 
-                  onClick={() => alert('The join feature is currently under development on the backend!')}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-xs transition cursor-pointer"
-                >
-                  Submit Join Request
-                </button>
-              </div>
-            </div>
-          )}
-
+          </>)}
         </div>
       </div>
     </div>
