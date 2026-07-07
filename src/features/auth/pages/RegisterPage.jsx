@@ -20,8 +20,8 @@ const ERP_MODULES = [
 ];
 
 const NAME_FIELDS = [
-                { id: 'firstname', label: 'First name', placeholder: 'Ali' },
-                { id: 'lastname',  label: 'Last name',  placeholder: 'Hassan' },
+  { id: 'first_name', label: 'First name', placeholder: 'Ali' },
+  { id: 'last_name', label: 'Last name', placeholder: 'Hassan' },
 ];
 
 const CONTACT_FIELDS = [
@@ -49,8 +49,8 @@ function getStrength(password) {
 
 // 1. بناء هيكل التحقق بالكامل (Validation Schema) مع Zod
 const registerSchema = z.object({
-  firstname: z.string().min(1, 'First name is required'),
-  lastname: z.string().min(1, 'Last name is required'),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
   username: z.string()
     .min(3, 'Username must be at least 3 characters')
     .regex(/^\w+$/, 'Letters, numbers, and underscores only'),
@@ -105,6 +105,7 @@ export default function RegisterPage() {
   const strength = getStrength(currentPassword);
 
   const onSubmit = (data) => {
+    console.log("data will send: ," , data);
     apiRegister(data);
   };
 

@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
@@ -10,6 +10,7 @@ import { faBell } from '@fortawesome/free-solid-svg-icons';
  */
 const PAGE_TITLES = {
   '/dashboard':                 { title: 'Dashboard',         module: null },
+  '/profile':                   { title: 'Profile',           module: null },
   '/inventory/products':        { title: 'Products',          module: 'Inventory' },
   '/inventory/stock':           { title: 'Stock Levels',      module: 'Inventory' },
   '/inventory/suppliers':       { title: 'Suppliers',         module: 'Inventory' },
@@ -82,7 +83,7 @@ export default function Topbar() {
         <div className="w-px h-5 bg-slate-200" />
 
         {/* User info chip */}
-        <div className="flex items-center gap-2.5">
+        <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
           <UserAvatar user={user} />
           <div className="hidden sm:block">
             <p className="text-sm font-medium text-slate-800 leading-none">
@@ -94,7 +95,7 @@ export default function Topbar() {
               {permissions?.role ?? 'Member'}
             </p>
           </div>
-        </div>
+        </Link>
       </div>
     </header>
   );

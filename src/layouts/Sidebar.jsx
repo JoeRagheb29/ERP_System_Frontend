@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightFromBracket, faBoxOpen,faCalendarCheck,faCalendarXmark,faChartBar,faClipboard,faCreditCard,
-  faLayerGroup,faListCheck,faRotateLeft,faShieldHalved,faShoppingCart,faTruck,faUserCheck,faUsers
+  faLayerGroup,faListCheck,faRotateLeft,faShieldHalved,faShoppingCart,faTruck,faUser,faUserCheck,faUsers
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/auth.store';
 import checkPermission from '../RBAC/checkPermission.util';
@@ -20,6 +20,7 @@ const NAV_SECTIONS = [
     label: null,
     items: [
       { path: '/dashboard',           label: 'Dashboard',        resource: null,              icon: faChartBar },
+      { path: '/profile',             label: 'Profile',          resource: null,              icon: faUser },
     ],
   },
   {

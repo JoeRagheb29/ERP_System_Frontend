@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import checkPermission from '../RBAC/checkPermission.util';
 
@@ -12,24 +12,32 @@ import checkPermission from '../RBAC/checkPermission.util';
  * No action distinction — the endpoint logic handles read/write differentiation.
  */
 
-export function ProtectedRoute({ requiredResource, children }) {
-  const { isAuthenticated, permissions, user } = useAuthStore();
+export function ProtectedRoute({ requiredResource, requiredAction, children }) {
+  const { isAuthenticated, isInitializing, permissions, user } = useAuthStore();
+  const location = useLocation();
+
+  // Wait until initializeAuth() finishes before making any routing decision
+  if (isInitializing) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect to onboarding if the user has no organization yet
   if (user && !user.org_id && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" />;
+    return <Navigate to="/onboarding" replace />;
   }
 
-  // Table-level permission check
-  if (requiredResource && permissions) {
-    if (!checkPermission(permissions, requiredResource)) {
+  if (requiredResource && requiredAction && permissions) {
+
+    const actionToCheck = requiredAction || 'read';
+
+    if (!checkPermission(permissions, requiredResource, actionToCheck)) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
-
-  return children || <Outlet />;
+  
+  console.log("check FROM PROTECTED ROUTE", requiredResource, "action:", requiredAction);
+  return children ? children : <Outlet />;
 }
