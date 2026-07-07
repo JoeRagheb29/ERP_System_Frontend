@@ -1,137 +1,14 @@
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faArrowRight,
-  faBuilding,
-  faCalendarDays,
-  faChartSimple,
-  faCheck,
-  faEnvelope,
-  faKey,
-  faLayerGroup,
-  faPhone,
-  faShieldHalved,
-  faUser,
-  faUserTie,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBuilding, faCalendarDays, faChartSimple, faEnvelope,
+  faKey, faLayerGroup, faPhone, faShieldHalved, faUser, faUserTie } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../../store/auth.store';
 import { ROLE_THEME_MAP, getDepartmentLabel, getRoleLabel } from '../../Organization/constants/rolesPermissions.constants';
-
-function getDisplayName(user) {
-  if (!user) return 'User Name';
-  if (user.first_name || user.last_name) {
-    return `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
-  }
-  return user.name || user.username || 'User Name';
-}
-
-function getInitials(user) {
-  const name = getDisplayName(user);
-  if (!name) return 'U';
-
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
-
-  return initials.slice(0, 2) || 'U';
-}
-
-function formatDate(value) {
-  if (!value) return 'Not available';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-
-  return new Intl.DateTimeFormat('en', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date);
-}
-
-function SectionCard({ title, description, children, className = '' }) {
-  return (
-    <section className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
-        {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}
-      </div>
-      <div className="p-6">{children}</div>
-    </section>
-  );
-}
-
-function FieldRow({ icon, label, value, mono = false }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
-        <FontAwesomeIcon icon={icon} className="w-3.5 h-3.5" />
-        {label}
-      </div>
-      <div className={`mt-1.5 text-sm font-medium ${mono ? 'font-mono' : 'text-slate-800'}`}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ icon, label, value, tone = 'slate' }) {
-  const tones = {
-    slate: 'bg-slate-100 text-slate-600',
-    blue: 'bg-blue-50 text-blue-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tones[tone] ?? tones.slate}`}>
-        <FontAwesomeIcon icon={icon} className="w-4 h-4" />
-      </div>
-      <p className="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
-    </div>
-  );
-}
-
-function PermissionSnapshot({ permissions }) {
-  const accessMap = permissions?.permissions ?? {};
-  const resources = Object.entries(accessMap);
-
-  if (!resources.length) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-        No detailed permission matrix available for this account.
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {resources.slice(0, 6).map(([resource, actions]) => {
-        const allowedActions = Object.entries(actions ?? {}).filter(([, allowed]) => Boolean(allowed));
-
-        return (
-          <div key={resource} className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-800 capitalize">{resource.replaceAll('_', ' ')}</p>
-              <p className="text-xs text-slate-400">{allowedActions.length} allowed action(s)</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {allowedActions.slice(0, 4).map(([action]) => (
-                <span key={action} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-                  <FontAwesomeIcon icon={faCheck} className="w-3 h-3" />
-                  {action}
-                </span>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+import StatCard from '../components/StatCard';
+import SectionCard from '../components/SectionCard';
+import FieldRow from '../components/FieldRow';
+import PermissionSnapshot from '../components/PermissionSnapshot';
+import { formatDate, getDisplayName, getInitials } from '../utils/utils';
 
 export default function ProfilePage() {
   const { user, permissions, isAuthenticated } = useAuthStore();
@@ -146,9 +23,7 @@ export default function ProfilePage() {
   const accessMap = permissions?.permissions ?? {};
   const grantedResources = Object.values(accessMap).filter((actions) => Object.values(actions ?? {}).some(Boolean)).length;
   const grantedActions = Object.values(accessMap).reduce(
-    (total, actions) => total + Object.values(actions ?? {}).filter(Boolean).length,
-    0
-  );
+    (total, actions) => total + Object.values(actions ?? {}).filter(Boolean).length,0 );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6 md:p-8">
