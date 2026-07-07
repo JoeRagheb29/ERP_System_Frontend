@@ -4,11 +4,11 @@ import DashboardLayout from './layouts/DashboardLayout';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import LoginPage from './features/auth/pages/LoginPage';
 import RegisterPage from './features/auth/pages/RegisterPage';
+import { useAuthStore } from './store/auth.store';
 import OnboardingPage from './layouts/OnboardingPage';
 import DashboardPage from './features/Organization/pages/DashboardPage';
-import { useAuthStore } from './store/auth.store';
 import RolesPermissionsPage from './features/Organization/pages/RolesPermissionsPage';
-
+import ProfilePage from './features/Profile/pages/ProfilePage';
 // كمبوننت بسيط لعرض الصفحات اللي لسه متبنتش
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -32,7 +32,6 @@ const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   { path: '/unauthorized', element: <Placeholder title="403 — Access Denied" /> },
-
   // ── المسارات المحمية (Protected Routes) ──────────────────────────────────────
   {
     element: <ProtectedRoute />, // حماية عامة لكل اللي تحته (تأكيد تسجيل الدخول)
@@ -44,6 +43,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard', element: <DashboardPage /> },
+          { path: 'profile', element: <ProfilePage /> },
 
           // Inventory Section
           protect('products',        'inventory/products',        'Products'),
