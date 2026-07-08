@@ -9,6 +9,7 @@ import OnboardingPage from './layouts/OnboardingPage';
 import DashboardPage from './features/Organization/pages/DashboardPage';
 import RolesPermissionsPage from './features/Organization/pages/RolesPermissionsPage';
 import ProfilePage from './features/Profile/pages/ProfilePage';
+import EmployeesPage from './features/HR/pages/EmployeesPage';
 // كمبوننت بسيط لعرض الصفحات اللي لسه متبنتش
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -52,7 +53,14 @@ const router = createBrowserRouter([
           protect('purchase_orders', 'inventory/purchase-orders', 'Purchase Orders'),
 
           // HR Section
-          protect('employees',     'hr/employees',     'Employees'),
+          {
+            path: 'hr/employees',
+            element: (
+              <ProtectedRoute requiredResource="employees">
+                <EmployeesPage />
+              </ProtectedRoute>
+            ),
+          },
           protect('attendance',    'hr/attendance',    'Attendance'),
           protect('leave_requests','hr/leave-requests','Leave Requests'),
           protect('payroll',       'hr/payroll',       'Payroll'),
