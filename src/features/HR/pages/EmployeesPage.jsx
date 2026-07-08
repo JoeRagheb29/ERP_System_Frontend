@@ -245,8 +245,10 @@ export default function EmployeesPage() {
       a.remove();
       URL.revokeObjectURL(url);
       setShowExportMenu(false);
-    } catch {
-      setToast({ type: 'error', message: 'Export failed.' });
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : 'Export failed.';
+      setToast({ type: 'error', message: msg });
     }
   }, [exportData, page, debouncedSearch, department, statusFilter, hireDateFrom, hireDateTo, sortBy, sortOrder]);
 

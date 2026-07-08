@@ -32,6 +32,12 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Let axios/browser set the correct Content-Type for FormData requests.
+    // Without this, the instance default "application/json" sticks and
+    // multipart uploads (import, photo, attachments) fail with 422.
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => Promise.reject(error)
