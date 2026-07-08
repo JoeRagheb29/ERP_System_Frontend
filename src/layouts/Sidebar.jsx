@@ -5,6 +5,7 @@ import { faArrowRightFromBracket, faBoxOpen,faCalendarCheck,faCalendarXmark,faCh
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/auth.store';
 import checkPermission from '../RBAC/checkPermission.util';
+import UserAvatar from '../features/Organization/components/UserAvatar';
 
 /**
  * NAV_SECTIONS — Single source of truth for the entire sidebar navigation.
@@ -64,20 +65,6 @@ const NAV_SECTIONS = [
 
 const LogOutIcon = () =>  <FontAwesomeIcon icon={faArrowRightFromBracket} className="w-4 h-4 shrink-0" />; 
 const BarChartIcon = () =>   <FontAwesomeIcon icon={faChartBar} className="w-5 h-5" />; 
-
-// ── User initials avatar ──────────────────────────────────────────────────────
-function UserAvatar({ user }) {
-  const initials = [user?.first_name, user?.last_name]
-    .filter(Boolean)
-    .map((n) => n[0].toUpperCase())
-    .join('') || user?.username?.[0]?.toUpperCase() || '?';
-
-  return (
-    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-semibold shrink-0">
-      {initials}
-    </div>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sidebar
@@ -140,7 +127,7 @@ export default function Sidebar() {
       {/* User footer */}
       <div className="px-3 pb-4 pt-3 border-t border-white/[0.06] shrink-0">
         <div className="flex items-center gap-3 px-2 py-2">
-          <UserAvatar user={user} />
+          <UserAvatar user={user} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-white text-xs font-medium truncate">
               {user?.first_name ? `${user.first_name} ${user.last_name ?? ''}`.trim() : user?.username}

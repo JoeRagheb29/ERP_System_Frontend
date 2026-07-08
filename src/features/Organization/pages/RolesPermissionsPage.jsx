@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck,faExclamationCircle,faRefresh,faShieldHalved,faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { faRefresh, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import apiClient from '../../../api/client';
 import { useAuthStore } from '../../../store/auth.store';
 import { ROLES } from '../constants/rolesPermissions.constants';
 import MembersSection from '../components/MembersSection';
 import RoleReferencePanel from '../components/RoleReferencePanel';
+import { Toast } from '../../../shared/components';
 
 export default function RolesPermissionsPage() {
   const { user: currentUser, permissions } = useAuthStore();
@@ -66,11 +66,7 @@ export default function RolesPermissionsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(timer);
-  }, [toast]);
+  const dismissToast = useCallback(() => setToast(null), []);
 
   // ── Assign role ───────────────────────────────────────────────────────────
 
@@ -147,19 +143,7 @@ export default function RolesPermissionsPage() {
         )}
       </div>
 
-      {toast && (
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-          toast.type === 'success'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-            : 'bg-red-50 border-red-200 text-red-700'
-        }`}>
-          <FontAwesomeIcon icon={toast.type === 'success' ? faCheck : faExclamationCircle} className="w-4 h-4" />
-          {toast.message}
-          <button onClick={() => setToast(null)} className="ml-auto opacity-60 hover:opacity-100">
-            <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <Toast toast={toast} onDismiss={dismissToast} />
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
         <MembersSection

@@ -1,4 +1,4 @@
-export default function UserAvatar({ user }) {
+export default function UserAvatar({ user, className = '', size = 'md' }) {
   const initials = [user?.first_name, user?.last_name]
     .filter(Boolean)
     .map((name) => name[0].toUpperCase())
@@ -21,8 +21,14 @@ export default function UserAvatar({ user }) {
 
   const color = colorMap[initials[0]] ?? 'bg-slate-100 text-slate-600';
 
+  const sizeClasses = {
+    sm: 'w-8 h-8 rounded-lg text-xs',
+    md: 'w-9 h-9 rounded-xl text-sm',
+    lg: 'w-10 h-10 rounded-xl text-base',
+  };
+
   return (
-    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 ${color}`}>
+    <div className={`${sizeClasses[size] ?? sizeClasses.md} flex items-center justify-center font-bold shrink-0 ${color} ${className}`}>
       {initials}
     </div>
   );

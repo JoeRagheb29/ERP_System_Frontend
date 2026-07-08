@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
+import UserAvatar from '../features/Organization/components/UserAvatar';
 
 /**
  * PAGE_TITLES — Maps route paths to human-readable page titles.
@@ -29,20 +30,6 @@ const PAGE_TITLES = {
 // ── Bell icon (notification placeholder) ─────────────────────────────────────
 function BellIcon() {
   return <FontAwesomeIcon icon={faBell} className="w-5 h-5" />;
-}
-
-// ── User initials avatar (duplicated from Sidebar to avoid circular import) ───
-function UserAvatar({ user }) {
-  const initials = [user?.first_name, user?.last_name]
-    .filter(Boolean)
-    .map((n) => n[0].toUpperCase())
-    .join('') || user?.username?.[0]?.toUpperCase() || '?';
-
-  return (
-    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 text-xs font-semibold">
-      {initials}
-    </div>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,7 +71,7 @@ export default function Topbar() {
 
         {/* User info chip */}
         <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-          <UserAvatar user={user} />
+          <UserAvatar user={user} size="sm" />
           <div className="hidden sm:block">
             <p className="text-sm font-medium text-slate-800 leading-none">
               {user?.first_name
