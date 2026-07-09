@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRightFromBracket, faBoxOpen,faCalendarCheck,faCalendarXmark,faChartBar,faClipboard,faCreditCard,
-  faLayerGroup,faListCheck,faRotateLeft,faShieldHalved,faShoppingCart,faTruck,faUser,faUserCheck,faUsers
+  faLayerGroup,faListCheck,faRotateLeft,faShieldHalved,faShoppingCart,faStar,faTruck,faUser,faUserCheck,faUsers
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/auth.store';
 import checkPermission from '../RBAC/checkPermission.util';
@@ -36,6 +36,7 @@ const NAV_SECTIONS = [
   {
     label: 'Human Resources',
     items: [
+      { path: '/hr/top-performance', label: 'Top Performance', resource: 'employees',     icon: faStar },
       { path: '/hr/employees',      label: 'Employees',      resource: 'employees',      icon: faUsers },
       { path: '/hr/attendance',     label: 'Attendance',     resource: 'attendance',     icon: faCalendarCheck },
       { path: '/hr/leave-requests', label: 'Leave Requests', resource: 'leave_requests', icon: faCalendarXmark },

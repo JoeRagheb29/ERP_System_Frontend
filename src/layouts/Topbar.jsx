@@ -18,6 +18,7 @@ const PAGE_TITLES = {
   '/inventory/purchase-orders': { title: 'Purchase Orders',   module: 'Inventory' },
   '/hr/employees':              { title: 'Employees',         module: 'Human Resources' },
   '/hr/attendance':             { title: 'Attendance',        module: 'Human Resources' },
+  '/hr/top-performance':        { title: 'Top Performance',   module: 'Human Resources' },
   '/hr/leave-requests':         { title: 'Leave Requests',    module: 'Human Resources' },
   '/hr/payroll':                { title: 'Payroll',           module: 'Human Resources' },
   '/sales/orders':              { title: 'Sales Orders',      module: 'Sales' },
