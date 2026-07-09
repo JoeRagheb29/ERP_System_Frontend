@@ -12,6 +12,7 @@ import ProfilePage from './features/Profile/pages/ProfilePage';
 import EmployeesPage from './features/HR/pages/EmployeesPage';
 import AttendancePage from './features/HR/pages/AttendancePage';
 import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
+import TopPerformancePage from './features/HR/pages/TopPerformancePage';
 // كمبوننت بسيط لعرض الصفحات اللي لسه متبنتش
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -80,6 +81,14 @@ const router = createBrowserRouter([
             ),
           },
           protect('payroll',       'hr/payroll',       'Payroll'),
+          {
+            path: 'hr/top-performance',
+            element: (
+              <ProtectedRoute requiredResource="employees">
+                <TopPerformancePage />
+              </ProtectedRoute>
+            ),
+          },
 
           // Sales Section
           protect('sales_orders', 'sales/orders',    'Sales Orders'),
