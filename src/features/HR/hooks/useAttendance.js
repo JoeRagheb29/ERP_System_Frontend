@@ -5,6 +5,9 @@ import {
   getAttendanceById,
   updateAttendance,
   deleteAttendance,
+  downloadAttendanceTemplate,
+  importAttendance,
+  exportAttendance,
 } from '../../../api/attendance.api';
 
 export function useAttendance() {
@@ -149,12 +152,64 @@ export function useAttendance() {
     }
   }, []);
 
+  const getImportTemplate = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const blob = await downloadAttendanceTemplate();
+      return blob;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Failed to download template.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const importFile = useCallback(async (file) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await importAttendance(file);
+      return result;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError('Import failed. Please check the file and try again.');
+      }
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const exportData = useCallback(async (params = {}) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const blob = await exportAttendance(params);
+      return blob;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Export failed.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     create,
     fetchAll,
     fetchById,
     update,
     remove,
+    getImportTemplate,
+    importFile,
+    exportData,
     isLoading,
     error,
   };
