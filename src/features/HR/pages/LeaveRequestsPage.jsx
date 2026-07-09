@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarXmark, faPlus, faRefresh, faChevronLeft, faChevronRight, faBuilding, faFlag, faCalendar, faEraser, faSearch, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarXmark, faPlus, faRefresh, faChevronLeft, faChevronRight, faBuilding, faFlag, faCalendar, faEraser, faDownload, faFileImport, faSearch, faTriangleExclamation, faXmark, faTrash, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../../store/auth.store';
 import checkPermission from '../../../RBAC/checkPermission.util';
 import { useLeaveRequests } from '../hooks/useLeaveRequests';
@@ -8,7 +8,18 @@ import { getEmployees } from '../../../api/hr.api';
 import LeaveRequestsTable from '../components/LeaveRequestsTable';
 import LeaveRequestFormModal from '../components/LeaveRequestFormModal';
 import LeaveRequestDetailsModal from '../components/LeaveRequestDetailsModal';
+import ImportModal from '../components/ImportModal';
 import { Toast, Button } from '../../../shared/components';
+
+const DEPARTMENTS = [
+  { value: '', label: 'All Departments' },
+  { value: 'hr', label: 'Human Resources' },
+  { value: 'inventory', label: 'Inventory' },
+  { value: 'sales', label: 'Sales' },
+  { value: 'engineering', label: 'Engineering' },
+  { value: 'finance', label: 'Finance' },
+  { value: 'marketing', label: 'Marketing' },
+];
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -33,7 +44,7 @@ const PAGE_SIZE = 20;
 export default function LeaveRequestsPage() {
   const { permissions } = useAuthStore();
   const canEdit = checkPermission(permissions, 'leave_requests') && permissions?.role !== 'employee';
-  const { fetchAll, create, update, remove } = useLeaveRequests();
+  const { fetchAll, create, update, remove, getImportTemplate, importFile, exportData, bulkDelete, bulkStatus } = useLeaveRequests();
 
   // ── Data state ──
   const [records, setRecords] = useState([]);
@@ -68,6 +79,15 @@ export default function LeaveRequestsPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [viewingRecord, setViewingRecord] = useState(null);
+
+  const [showImport, setShowImport] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showBulkStatus, setShowBulkStatus] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const exportMenuRef = useRef(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const hasActiveFilters = department || statusFilter || leaveTypeFilter || dateFrom || dateTo || search;
 
@@ -124,12 +144,19 @@ export default function LeaveRequestsPage() {
   }, [search]);
 
   useEffect(() => {
+    setSelectedIds(new Set());
     setPage(1);
     doFetch(1);
-  }, [debouncedSearch, department, statusFilter, leaveTypeFilter, dateFrom, dateTo, sortBy, sortOrder, doFetch]);
+  }, [debouncedSearch, department, statusFilter, leaveTypeFilter, dateFrom, dateTo, doFetch]);
+
+  useEffect(() => {
+    setPage(1);
+    doFetch(1);
+  }, [sortBy, sortOrder, doFetch]);
 
   useEffect(() => {
     if (page === 1) return;
+    setSelectedIds(new Set());
     doFetch(page);
   }, [page, doFetch]);
 
@@ -198,6 +225,7 @@ export default function LeaveRequestsPage() {
     setDeleting(true);
     try {
       await remove(deletingRecord.id);
+      setSelectedIds(new Set());
       setToast({ type: 'success', message: 'Leave request deleted successfully.' });
       setShowDelete(false);
       setDeletingRecord(null);
@@ -211,6 +239,142 @@ export default function LeaveRequestsPage() {
     }
   };
 
+  // ── Export ──
+  const triggerExport = useCallback(async (fileFormat, scope) => {
+    try {
+      const blob = await exportData({
+        format: fileFormat,
+        scope,
+        page,
+        page_size: PAGE_SIZE,
+        search: debouncedSearch || undefined,
+        department: department || undefined,
+        status: statusFilter || undefined,
+        leave_type: leaveTypeFilter || undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        sort_by: sortBy !== 'requested_at' ? sortBy : undefined,
+        sort_order: sortOrder !== 'desc' ? sortOrder : undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `leave_requests.${fileFormat}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setShowExportMenu(false);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      const msg = typeof detail === 'string' ? detail : 'Export failed.';
+      setToast({ type: 'error', message: msg });
+    }
+  }, [exportData, page, debouncedSearch, department, statusFilter, leaveTypeFilter, dateFrom, dateTo, sortBy, sortOrder]);
+
+  // ── Import ──
+  const handleImport = useCallback(async (file) => {
+    setImporting(true);
+    try {
+      const result = await importFile(file);
+      setImporting(false);
+      if (result.imported > 0) {
+        setToast({ type: 'success', message: `${result.imported} leave request(s) imported.` });
+        doFetch(1);
+      }
+      return result;
+    } catch (err) {
+      setImporting(false);
+      throw err;
+    }
+  }, [importFile, doFetch]);
+
+  const handleDownloadTemplate = useCallback(async () => {
+    try {
+      const blob = await getImportTemplate();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leave_import_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setToast({ type: 'error', message: 'Failed to download template.' });
+    }
+  }, [getImportTemplate]);
+
+  // ── Bulk actions ──
+  const handleBulkDelete = useCallback(async () => {
+    setBulkBusy(true);
+    try {
+      const result = await bulkDelete([...selectedIds]);
+      setToast({ type: 'success', message: result.message || `${result.deleted} leave request(s) deleted.` });
+      setSelectedIds(new Set());
+      setShowBulkDeleteConfirm(false);
+      doFetch(1);
+    } catch {
+      setToast({ type: 'error', message: 'Bulk delete failed.' });
+    } finally {
+      setBulkBusy(false);
+    }
+  }, [bulkDelete, selectedIds, doFetch]);
+
+  const handleBulkStatus = useCallback(async (newStatus) => {
+    setBulkBusy(true);
+    try {
+      const result = await bulkStatus([...selectedIds], newStatus);
+      setToast({ type: 'success', message: result.message || `${result.updated} leave request(s) updated.` });
+      setSelectedIds(new Set());
+      setShowBulkStatus(false);
+      doFetch(1);
+    } catch {
+      setToast({ type: 'error', message: 'Bulk status change failed.' });
+    } finally {
+      setBulkBusy(false);
+    }
+  }, [bulkStatus, selectedIds, doFetch]);
+
+  const handleBulkExport = useCallback(async (fileFormat) => {
+    try {
+      const params = { format: fileFormat, scope: 'filtered', page_size: 100 };
+      const blob = await exportData(params);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `selected_leave_requests.${fileFormat}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setToast({ type: 'error', message: 'Export selected failed.' });
+    }
+  }, [exportData]);
+
+  // Close export menu on outside click, Escape, or scroll
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const handleClick = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setShowExportMenu(false);
+      }
+    };
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setShowExportMenu(false);
+    };
+    const handleScroll = () => setShowExportMenu(false);
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [showExportMenu]);
+
   const clearFilters = () => {
     setSearch('');
     setDebouncedSearch('');
@@ -221,6 +385,7 @@ export default function LeaveRequestsPage() {
     setDateTo('');
     setSortBy('requested_at');
     setSortOrder('desc');
+    setSelectedIds(new Set());
     setPage(1);
   };
 
@@ -238,6 +403,29 @@ export default function LeaveRequestsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {canEdit && (
+            <Button onClick={() => setShowImport(true)}>
+              <FontAwesomeIcon icon={faFileImport} className="w-3.5 h-3.5" />
+              Import
+            </Button>
+          )}
+          <div className="relative" ref={exportMenuRef}>
+            <Button onClick={() => setShowExportMenu((v) => !v)}>
+              <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5" />
+              Export
+            </Button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-1 w-44 z-20 bg-white rounded-xl border border-slate-200 shadow-lg py-1">
+                <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Current Page</p>
+                <button onClick={() => triggerExport('xlsx', 'filtered')} className="w-full text-left px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">Excel (.xlsx)</button>
+                <button onClick={() => triggerExport('csv', 'filtered')} className="w-full text-left px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">CSV (.csv)</button>
+                <hr className="my-1 border-slate-100" />
+                <p className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">All Records</p>
+                <button onClick={() => triggerExport('xlsx', 'all')} className="w-full text-left px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">All Excel (.xlsx)</button>
+                <button onClick={() => triggerExport('csv', 'all')} className="w-full text-left px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 transition-colors">All CSV (.csv)</button>
+              </div>
+            )}
+          </div>
           <Button onClick={() => doFetch(1)}>
             <FontAwesomeIcon icon={faRefresh} className="w-3.5 h-3.5" />
             Refresh
@@ -261,20 +449,22 @@ export default function LeaveRequestsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search employees…"
+            placeholder="Search employees\u2026"
             className="pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-600 w-56"
           />
         </div>
 
         <div className="relative">
           <FontAwesomeIcon icon={faBuilding} className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
+          <select
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            placeholder="Department…"
-            className="pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-600 w-40"
-          />
+            className="pl-9 pr-8 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer text-slate-600"
+          >
+            {DEPARTMENTS.map((dept) => (
+              <option key={dept.value} value={dept.value}>{dept.label}</option>
+            ))}
+          </select>
         </div>
 
         <div className="relative">
@@ -333,6 +523,30 @@ export default function LeaveRequestsPage() {
         )}
       </div>
 
+      {/* ── Bulk Action Bar ── */}
+      {selectedIds.size > 0 && canEdit && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
+          <span className="text-sm font-medium text-blue-700">{selectedIds.size} selected</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button onClick={() => setShowBulkStatus(true)} loading={bulkBusy}>
+              <FontAwesomeIcon icon={faFlag} className="w-3.5 h-3.5" />
+              Change Status
+            </Button>
+            <Button variant="ghost-danger" onClick={() => setShowBulkDeleteConfirm(true)} loading={bulkBusy}>
+              <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
+              Delete Selected
+            </Button>
+            <Button onClick={() => handleBulkExport('xlsx')}>
+              <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5" />
+              Export Selected
+            </Button>
+            <Button onClick={() => setSelectedIds(new Set())}>
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Table ── */}
       <LeaveRequestsTable
         records={records}
@@ -347,13 +561,16 @@ export default function LeaveRequestsPage() {
         sortOrder={sortOrder}
         onSort={handleSort}
         canEdit={canEdit}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        enableSelection={true}
       />
 
       {/* ── Pagination ── */}
       {!loading && !error && pages > 1 && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-slate-400 order-2 sm:order-1">
-            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+            Showing {(page - 1) * PAGE_SIZE + 1}\u2013{Math.min(page * PAGE_SIZE, total)} of {total}
           </p>
           <nav className="flex items-center gap-1 order-1 sm:order-2" aria-label="Pagination">
             <button
@@ -435,6 +652,90 @@ export default function LeaveRequestsPage() {
         onClose={() => { setShowDetail(false); setViewingRecord(null); }}
         record={viewingRecord}
         onEdit={canEdit ? handleDetailEdit : undefined}
+      />
+
+      {/* ── Bulk Delete Confirm ── */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-title">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <FontAwesomeIcon icon={faTrash} className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 id="bulk-delete-title" className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} Record(s)?</h2>
+                <p className="text-sm text-slate-500 mt-2">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button onClick={() => setShowBulkDeleteConfirm(false)}>Cancel</Button>
+              <Button variant="danger" onClick={handleBulkDelete} loading={bulkBusy}>Delete</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Status Change ── */}
+      {showBulkStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="bulk-status-title">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                <FontAwesomeIcon icon={faFlag} className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 id="bulk-status-title" className="text-lg font-semibold text-slate-900">Change Status</h2>
+                <p className="text-sm text-slate-500 mt-2">Update status for {selectedIds.size} record(s).</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-6">
+              <Button
+                onClick={() => handleBulkStatus('approved')}
+                loading={bulkBusy}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                Approve
+              </Button>
+              <Button
+                onClick={() => handleBulkStatus('rejected')}
+                loading={bulkBusy}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                Reject
+              </Button>
+              <Button
+                onClick={() => handleBulkStatus('pending')}
+                loading={bulkBusy}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                Set Pending
+              </Button>
+              <Button
+                onClick={() => handleBulkStatus('cancelled')}
+                loading={bulkBusy}
+                className="bg-slate-600 hover:bg-slate-700 text-white"
+              >
+                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                Cancel
+              </Button>
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button onClick={() => setShowBulkStatus(false)}>Cancel</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Import Modal ── */}
+      <ImportModal
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        onImport={handleImport}
+        onDownloadTemplate={handleDownloadTemplate}
+        importing={importing}
       />
     </div>
   );

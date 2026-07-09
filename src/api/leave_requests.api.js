@@ -24,3 +24,35 @@ export async function deleteLeave(id) {
   const { data } = await apiClient.delete(`/leave-requests/${id}`);
   return data;
 }
+
+export async function exportLeaveRequests(params) {
+  const { data } = await apiClient.get('/leave-requests/export', {
+    params,
+    responseType: 'blob',
+  });
+  return data;
+}
+
+export async function downloadLeaveTemplate() {
+  const { data } = await apiClient.get('/leave-requests/export/template', {
+    responseType: 'blob',
+  });
+  return data;
+}
+
+export async function importLeaveRequests(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await apiClient.post('/leave-requests/import', formData);
+  return data;
+}
+
+export async function bulkDeleteLeaveRequests(ids) {
+  const { data } = await apiClient.post('/leave-requests/bulk/delete', { ids });
+  return data;
+}
+
+export async function bulkChangeLeaveStatus(ids, status) {
+  const { data } = await apiClient.post('/leave-requests/bulk/status', { ids, status });
+  return data;
+}

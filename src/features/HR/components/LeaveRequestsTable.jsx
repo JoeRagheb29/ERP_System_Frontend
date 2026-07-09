@@ -33,6 +33,31 @@ const SORT_COLUMNS = [
   { key: 'requested_at', label: 'Requested' },
 ];
 
+function SelectAllCheckbox({ checked, indeterminate, onChange }) {
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      ref={(el) => { if (el) el.indeterminate = indeterminate; }}
+      onChange={onChange}
+      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 cursor-pointer"
+      aria-label={checked ? 'Deselect all' : 'Select all'}
+    />
+  );
+}
+
+function RowCheckbox({ checked, onChange, label }) {
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/30 cursor-pointer"
+      aria-label={label}
+    />
+  );
+}
+
 function SortIcon({ columnKey, sortBy, sortOrder }) {
   if (sortBy !== columnKey) {
     return <FontAwesomeIcon icon={faSort} className="w-3 h-3 ml-1 text-slate-300 group-hover:text-slate-400" />;
@@ -58,6 +83,9 @@ export default function LeaveRequestsTable({
   sortOrder,
   onSort,
   canEdit,
+  selectedIds,
+  onSelectionChange,
+  enableSelection,
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -121,6 +149,21 @@ export default function LeaveRequestsTable({
           <table className="w-full" role="table" aria-label="Leave requests table">
             <thead>
               <tr className="border-b border-slate-100">
+                {enableSelection && (
+                  <th className="px-4 py-3 sticky top-0 z-10 bg-white w-10">
+                    <SelectAllCheckbox
+                      checked={records.length > 0 && selectedIds.size === records.length}
+                      indeterminate={selectedIds.size > 0 && selectedIds.size < records.length}
+                      onChange={() => {
+                        if (selectedIds.size === records.length) {
+                          onSelectionChange(new Set());
+                        } else {
+                          onSelectionChange(new Set(records.map((r) => r.id)));
+                        }
+                      }}
+                    />
+                  </th>
+                )}
                 {SORT_COLUMNS.map((col) => (
                   <th
                     key={col.key}
@@ -142,7 +185,7 @@ export default function LeaveRequestsTable({
             <tbody className="divide-y divide-slate-100/60">
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan={SORT_COLUMNS.length + 1}>
+                  <td colSpan={SORT_COLUMNS.length + 1 + (enableSelection ? 1 : 0)}>
                     <div className="flex flex-col items-center justify-center py-14">
                       <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mb-4">
                         <FontAwesomeIcon icon={faClipboardList} className="w-6 h-6 text-slate-300" />
@@ -166,6 +209,20 @@ export default function LeaveRequestsTable({
                       idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'
                     } hover:bg-blue-50/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500/30`}
                   >
+                    {enableSelection && (
+                      <td className="px-4 py-3.5 w-10" onClick={(e) => e.stopPropagation()}>
+                        <RowCheckbox
+                          checked={selectedIds.has(rec.id)}
+                          onChange={() => {
+                            const next = new Set(selectedIds);
+                            if (next.has(rec.id)) next.delete(rec.id);
+                            else next.add(rec.id);
+                            onSelectionChange(next);
+                          }}
+                          label={`Select ${rec.employee_name}`}
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-3.5">
                       <p className="text-sm font-semibold text-slate-800">{rec.employee_name}</p>
                       <p className="text-[11px] text-slate-400">{rec.department ? rec.department.charAt(0).toUpperCase() + rec.department.slice(1) : ''}</p>

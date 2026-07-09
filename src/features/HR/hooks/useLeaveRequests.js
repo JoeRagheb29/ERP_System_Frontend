@@ -5,6 +5,11 @@ import {
   getLeaveById,
   updateLeave,
   deleteLeave,
+  exportLeaveRequests,
+  downloadLeaveTemplate,
+  importLeaveRequests,
+  bulkDeleteLeaveRequests,
+  bulkChangeLeaveStatus,
 } from '../../../api/leave_requests.api';
 
 export function useLeaveRequests() {
@@ -21,7 +26,7 @@ export function useLeaveRequests() {
       const status = err.response?.status;
       const detail = err.response?.data?.detail;
       if (status === 422 && Array.isArray(detail)) {
-        const messages = detail.map((e) => e.msg.replace(/^Value error, /, '')).join(' · ');
+        const messages = detail.map((e) => e.msg.replace(/^Value error, /, '')).join(' \u00b7 ');
         setError(messages);
       } else if (typeof detail === 'string') {
         setError(detail);
@@ -114,7 +119,7 @@ export function useLeaveRequests() {
       if (status === 404) {
         setError('Leave request not found.');
       } else if (status === 422 && Array.isArray(detail)) {
-        const messages = detail.map((e) => e.msg.replace(/^Value error, /, '')).join(' · ');
+        const messages = detail.map((e) => e.msg.replace(/^Value error, /, '')).join(' \u00b7 ');
         setError(messages);
       } else if (typeof detail === 'string') {
         setError(detail);
@@ -149,12 +154,96 @@ export function useLeaveRequests() {
     }
   }, []);
 
+  const exportData = useCallback(async (params = {}) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const blob = await exportLeaveRequests(params);
+      return blob;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Export failed.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const getImportTemplate = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const blob = await downloadLeaveTemplate();
+      return blob;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Failed to download template.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const importFile = useCallback(async (file) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await importLeaveRequests(file);
+      return result;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError('Import failed. Please check the file and try again.');
+      }
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const bulkDelete = useCallback(async (ids) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await bulkDeleteLeaveRequests(ids);
+      return result;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Bulk delete failed.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const bulkStatus = useCallback(async (ids, status) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await bulkChangeLeaveStatus(ids, status);
+      return result;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Bulk status change failed.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     create,
     fetchAll,
     fetchById,
     update,
     remove,
+    exportData,
+    getImportTemplate,
+    importFile,
+    bulkDelete,
+    bulkStatus,
     isLoading,
     error,
   };
