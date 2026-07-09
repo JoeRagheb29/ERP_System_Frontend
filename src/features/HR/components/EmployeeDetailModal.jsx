@@ -196,6 +196,7 @@ function DetailsTab({ employee, onEdit, canEdit, onClose }) {
   const [photoSrc, setPhotoSrc] = useState(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoProgress, setPhotoProgress] = useState(0);
+  const [photoToast, setPhotoToast] = useState(null);
   const photoInputRef = useRef(null);
   const blobUrlRef = useRef(null);
 
@@ -251,8 +252,10 @@ function DetailsTab({ employee, onEdit, canEdit, onClose }) {
         if (e.total) setPhotoProgress(Math.round((e.loaded / e.total) * 100));
       });
       await fetchPhoto(employee.id);
-    } catch {
-      // error handled by hook, use toast later
+    } catch (err) {
+      setPhotoToast({ type: 'error', message: err?.response?.data?.detail || err?.message || 'Failed to upload photo' });
+      // revert to the server-stored photo
+      await fetchPhoto(employee.id);
     } finally {
       setPhotoUploading(false);
       setPhotoProgress(0);
@@ -268,8 +271,8 @@ function DetailsTab({ employee, onEdit, canEdit, onClose }) {
         blobUrlRef.current = null;
       }
       setPhotoSrc(null);
-    } catch {
-      // handled by hook
+    } catch (err) {
+      setPhotoToast({ type: 'error', message: err?.response?.data?.detail || err?.message || 'Failed to remove photo' });
     }
   };
 
@@ -281,6 +284,14 @@ function DetailsTab({ employee, onEdit, canEdit, onClose }) {
 
   return (
     <div className="px-6 py-4">
+      {photoToast && (
+        <div className={`mb-4 flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium ${
+          photoToast.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700'
+        }`}>
+          <span>{photoToast.message}</span>
+          <button onClick={() => setPhotoToast(null)} className="ml-3 text-current opacity-60 hover:opacity-100 font-bold">&times;</button>
+        </div>
+      )}
       {/* Profile Photo */}
       <div className="flex items-center gap-4 mb-4 pb-4 border-b border-slate-100">
         <div className="relative shrink-0">

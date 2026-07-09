@@ -395,6 +395,19 @@ export default function AttendancePage() {
     setPage(1);
   };
 
+  const handleRefresh = useCallback(() => {
+    clearFilters();
+    doFetch(1);
+    (async () => {
+      try {
+        const data = await getEmployees({ page: 1, page_size: 100 });
+        setEmployees(data.items ?? []);
+      } catch {
+        setToast({ type: 'error', message: 'Failed to refresh employees list.' });
+      }
+    })();
+  }, [doFetch]);
+
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -432,7 +445,7 @@ export default function AttendancePage() {
               </div>
             )}
           </div>
-          <Button onClick={() => doFetch(1)}>
+          <Button onClick={handleRefresh}>
             <FontAwesomeIcon icon={faRefresh} className="w-3.5 h-3.5" />
             Refresh
           </Button>

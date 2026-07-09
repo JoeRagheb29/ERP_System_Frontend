@@ -392,7 +392,7 @@ export default function EmployeesPage() {
               </div>
             )}
           </div>
-          <Button onClick={() => doFetch(1)}>
+          <Button onClick={() => { clearFilters(); doFetch(1); }}>
             <FontAwesomeIcon icon={faRefresh} className="w-3.5 h-3.5" />
             Refresh
           </Button>
