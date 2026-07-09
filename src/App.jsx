@@ -10,6 +10,8 @@ import DashboardPage from './features/Organization/pages/DashboardPage';
 import RolesPermissionsPage from './features/Organization/pages/RolesPermissionsPage';
 import ProfilePage from './features/Profile/pages/ProfilePage';
 import EmployeesPage from './features/HR/pages/EmployeesPage';
+import AttendancePage from './features/HR/pages/AttendancePage';
+import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
 // كمبوننت بسيط لعرض الصفحات اللي لسه متبنتش
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -61,8 +63,22 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          protect('attendance',    'hr/attendance',    'Attendance'),
-          protect('leave_requests','hr/leave-requests','Leave Requests'),
+          {
+            path: 'hr/attendance',
+            element: (
+              <ProtectedRoute requiredResource="attendance">
+                <AttendancePage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'hr/leave-requests',
+            element: (
+              <ProtectedRoute requiredResource="leave_requests">
+                <LeaveRequestsPage />
+              </ProtectedRoute>
+            ),
+          },
           protect('payroll',       'hr/payroll',       'Payroll'),
 
           // Sales Section
