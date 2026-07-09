@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPen, faTrash, faSpinner, faExclamationCircle, faClipboardList, faEye, faSort, faSortUp, faSortDown, faArrowRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faPen, faTrash, faExclamationCircle, faClipboardList, faEye, faSort, faSortUp, faSortDown, faArrowRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { StatusBadge } from '../../../shared/components';
 
 function formatDate(value) {
@@ -99,15 +99,6 @@ export default function LeaveRequestsTable({
             </span>
           )}
         </div>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-100 transition-colors"
-          >
-            <FontAwesomeIcon icon={faSpinner} className="w-3.5 h-3.5" />
-            Refresh
-          </button>
-        )}
       </div>
 
       {loading && (
