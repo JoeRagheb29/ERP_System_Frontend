@@ -12,8 +12,9 @@ import ProfilePage from './features/Profile/pages/ProfilePage';
 import EmployeesPage from './features/HR/pages/EmployeesPage';
 import AttendancePage from './features/HR/pages/AttendancePage';
 import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
+import PayrollPage from './features/HR/pages/PayrollPage';
 import TopPerformancePage from './features/HR/pages/TopPerformancePage';
-// كمبوننت بسيط لعرض الصفحات اللي لسه متبنتش
+
 const Placeholder = ({ title }) => (
   <div className="p-2">
     <h1 className="text-xl font-semibold text-slate-800 mb-1">{title}</h1>
@@ -80,7 +81,14 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          protect('payroll',       'hr/payroll',       'Payroll'),
+          {
+            path: 'hr/payroll',
+            element: (
+              <ProtectedRoute requiredResource="payroll">
+                <PayrollPage />
+              </ProtectedRoute>
+            ),
+          },
           {
             path: 'hr/top-performance',
             element: (
