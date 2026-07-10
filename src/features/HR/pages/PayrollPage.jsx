@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMoneyBillWave, faPlus, faRefresh, faDownload, faSearch, faBuilding,
@@ -7,6 +7,8 @@ import {
   faUsers, faCalendarAlt, faFileInvoiceDollar,
 } from '@fortawesome/free-solid-svg-icons';
 import { Toast, Button } from '../../../shared/components';
+import { usePayroll } from '../hooks/usePayroll';
+import { getEmployees } from '../../../api/hr.api';
 
 const PAYROLL_STATUSES = ['pending', 'paid', 'cancelled'];
 
@@ -50,16 +52,7 @@ const DEPARTMENTS = [
   { value: 'marketing', label: 'Marketing' },
 ];
 
-const INITIAL_RECORDS = [
-  { id: 1, employee_name: 'Ahmed Hassan', department: 'engineering', month: 'july', year: '2026', basic_salary: 12000, bonus: 1000, allowance: 500, deduction: 300, net_salary: 13200, status: 'paid', notes: '', created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-05T14:30:00Z' },
-  { id: 2, employee_name: 'Sara Ahmed', department: 'hr', month: 'july', year: '2026', basic_salary: 15000, bonus: 2000, allowance: 800, deduction: 500, net_salary: 17300, status: 'paid', notes: '', created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-05T14:30:00Z' },
-  { id: 3, employee_name: 'Mohamed Ali', department: 'it', month: 'july', year: '2026', basic_salary: 18000, bonus: 2500, allowance: 1000, deduction: 600, net_salary: 20900, status: 'pending', notes: 'Awaiting approval', created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-04T09:00:00Z' },
-  { id: 4, employee_name: 'Nora Ehab', department: 'sales', month: 'july', year: '2026', basic_salary: 10000, bonus: 1500, allowance: 400, deduction: 200, net_salary: 11700, status: 'cancelled', notes: 'Duplicate entry', created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-03T16:00:00Z' },
-  { id: 5, employee_name: 'Khaled Youssef', department: 'finance', month: 'july', year: '2026', basic_salary: 22000, bonus: 3000, allowance: 1200, deduction: 800, net_salary: 25400, status: 'paid', notes: '', created_at: '2026-07-02T10:00:00Z', updated_at: '2026-07-06T11:00:00Z' },
-  { id: 6, employee_name: 'Laila Mostafa', department: 'marketing', month: 'july', year: '2026', basic_salary: 14000, bonus: 1800, allowance: 600, deduction: 400, net_salary: 16000, status: 'pending', notes: 'Pending HR review', created_at: '2026-07-02T10:00:00Z', updated_at: '2026-07-04T12:00:00Z' },
-  { id: 7, employee_name: 'Omar Farouk', department: 'engineering', month: 'july', year: '2026', basic_salary: 16000, bonus: 2200, allowance: 700, deduction: 500, net_salary: 18400, status: 'paid', notes: '', created_at: '2026-07-01T10:00:00Z', updated_at: '2026-07-05T14:30:00Z' },
-  { id: 8, employee_name: 'Dalia Hisham', department: 'hr', month: 'august', year: '2026', basic_salary: 13000, bonus: 1200, allowance: 500, deduction: 300, net_salary: 14400, status: 'pending', notes: 'New hire first payroll', created_at: '2026-08-01T10:00:00Z', updated_at: '2026-08-03T09:00:00Z' },
-];
+
 
 const STATUS_COLORS = {
   paid: { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -153,6 +146,11 @@ function RowCheckbox({ checked, onChange, label }) {
   );
 }
 
+const MONTH_VALUE_TO_INT = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+};
+
 export default function PayrollPage() {
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState('');
@@ -162,9 +160,9 @@ export default function PayrollPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
 
-  const [records, setRecords] = useState(INITIAL_RECORDS);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [records, setRecords] = useState([]);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pageError, setPageError] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -179,10 +177,42 @@ export default function PayrollPage() {
 
   const [filtersApplied, setFiltersApplied] = useState(false);
 
+  const [employeesList, setEmployeesList] = useState([]);
+
+  const { fetchAll, fetchById, generate, update, remove, isLoading: apiLoading, error: apiError } = usePayroll();
+
+  const loadRecords = useCallback(async () => {
+    setPageLoading(true);
+    setPageError(null);
+    try {
+      const result = await fetchAll({ page: 1, page_size: 100 });
+      setRecords(result.items);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setPageError(typeof detail === 'string' ? detail : 'Failed to load payroll records.');
+    } finally {
+      setPageLoading(false);
+    }
+  }, [fetchAll]);
+
+  const loadEmployees = useCallback(async () => {
+    try {
+      const result = await getEmployees({ page: 1, page_size: 500 });
+      setEmployeesList(result.items ?? []);
+    } catch {
+      // employees list is non-critical for the page
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRecords();
+    loadEmployees();
+  }, [loadRecords, loadEmployees]);
+
   const hasActiveFilters = search || department || month || year || statusFilter;
 
   const filteredRecords = records.filter((r) => {
-    if (search && !r.employee_name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !r.employee_name?.toLowerCase().includes(search.toLowerCase())) return false;
     if (department && r.department !== department) return false;
     if (month && r.month !== month) return false;
     if (year && r.year !== year) return false;
@@ -214,15 +244,21 @@ export default function PayrollPage() {
     setShowDelete(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
+    if (!deletingRecord) return;
     setDeleting(true);
-    setTimeout(() => {
+    try {
+      await remove(deletingRecord.id);
       setRecords((prev) => prev.filter((r) => r.id !== deletingRecord.id));
       setShowDelete(false);
       setDeletingRecord(null);
       setDeleting(false);
       setToast({ type: 'success', message: `${deletingRecord.employee_name}'s payroll deleted.` });
-    }, 400);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setToast({ type: 'error', message: typeof detail === 'string' ? detail : 'Failed to delete payroll record.' });
+      setDeleting(false);
+    }
   };
 
   const handleApplyFilters = () => {
@@ -240,11 +276,11 @@ export default function PayrollPage() {
     setSelectedIds(new Set());
   };
 
-  const handleRefreshClick = () => {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      setRecords(INITIAL_RECORDS);
+  const handleRefreshClick = async () => {
+    setPageLoading(true);
+    setPageError(null);
+    try {
+      await loadRecords();
       setFiltersApplied(false);
       setSearch('');
       setDepartment('');
@@ -252,9 +288,57 @@ export default function PayrollPage() {
       setYear('');
       setStatusFilter('');
       setSelectedIds(new Set());
-      setLoading(false);
       setToast({ type: 'success', message: 'Payroll records refreshed.' });
-    }, 600);
+    } catch {
+      setToast({ type: 'error', message: 'Failed to refresh payroll records.' });
+    } finally {
+      setPageLoading(false);
+    }
+  };
+
+  const handleGeneratePayroll = async () => {
+    setSaving(true);
+    try {
+      await generate({ month: 7, year: 2026 });
+      setToast({ type: 'success', message: 'Payroll generation completed.' });
+      await loadRecords();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setToast({ type: 'error', message: typeof detail === 'string' ? detail : 'Payroll generation failed.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFormSave = async (data) => {
+    setSaving(true);
+    try {
+      if (editingRecord) {
+        const { employee_name, department, month, year, basic_salary, deduction, ...rest } = data;
+        const payload = {
+          bonus: rest.bonus,
+          allowance: rest.allowance,
+          deductions: deduction,
+          status: rest.status,
+          notes: rest.notes,
+        };
+        await update(editingRecord.id, payload);
+        setToast({ type: 'success', message: `${data.employee_name}'s payroll updated.` });
+      } else {
+        const intMonth = MONTH_VALUE_TO_INT[data.month] || 7;
+        const intYear = parseInt(data.year, 10) || 2026;
+        await generate({ employee_id: data.employee_id, month: intMonth, year: intYear });
+        setToast({ type: 'success', message: `Payroll for ${data.employee_name} created.` });
+      }
+      await loadRecords();
+      setShowForm(false);
+      setEditingRecord(null);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setToast({ type: 'error', message: typeof detail === 'string' ? detail : 'Failed to save payroll record.' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleSelect = (id) => {
@@ -274,13 +358,16 @@ export default function PayrollPage() {
     }
   };
 
-  const totalPayrollAmount = records.reduce((sum, r) => sum + r.net_salary, 0);
+  const loading = pageLoading || apiLoading;
+  const displayError = pageError || apiError;
+
+  const totalPayrollAmount = records.reduce((sum, r) => sum + (r.net_salary || 0), 0);
   const paidCount = records.filter((r) => r.status === 'paid').length;
   const pendingCount = records.filter((r) => r.status === 'pending').length;
   const avgSalary = records.length ? Math.round(totalPayrollAmount / records.length) : 0;
   const thisMonthPayroll = records
     .filter((r) => r.month === 'july' && r.year === '2026')
-    .reduce((sum, r) => sum + r.net_salary, 0);
+    .reduce((sum, r) => sum + (r.net_salary || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -296,7 +383,7 @@ export default function PayrollPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setToast({ type: 'success', message: 'Payroll generation started.' })}>
+          <Button onClick={handleGeneratePayroll} loading={saving}>
             <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
             Generate Payroll
           </Button>
@@ -474,13 +561,13 @@ export default function PayrollPage() {
           </div>
         )}
 
-        {!loading && error && (
+        {!loading && displayError && (
           <div className="flex flex-col items-center justify-center py-14 px-6">
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
               <FontAwesomeIcon icon={faExclamationCircle} className="w-6 h-6 text-red-400" />
             </div>
             <p className="text-sm font-semibold text-slate-800 mb-1">Failed to load payroll records</p>
-            <p className="text-xs text-slate-500 mb-5 max-w-sm text-center">{error}</p>
+            <p className="text-xs text-slate-500 mb-5 max-w-sm text-center">{displayError}</p>
             <button
               onClick={handleRefreshClick}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
@@ -491,7 +578,7 @@ export default function PayrollPage() {
           </div>
         )}
 
-        {!loading && !error && (
+        {!loading && !displayError && (
           <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full" role="table" aria-label="Payroll table">
               <thead>
@@ -669,23 +756,9 @@ export default function PayrollPage() {
       {showForm && (
         <PayrollFormModal
           record={editingRecord}
+          employees={employeesList}
           onClose={() => { setShowForm(false); setEditingRecord(null); }}
-          onSave={(data) => {
-            setSaving(true);
-            setTimeout(() => {
-              if (editingRecord) {
-                setRecords((prev) => prev.map((r) => (r.id === editingRecord.id ? { ...r, ...data, net_salary: calculateNetSalary(data.basic_salary, data.bonus, data.allowance, data.deduction) } : r)));
-                setToast({ type: 'success', message: `${data.employee_name}'s payroll updated.` });
-              } else {
-                const newRecord = { ...data, id: Date.now(), net_salary: calculateNetSalary(data.basic_salary, data.bonus, data.allowance, data.deduction), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-                setRecords((prev) => [...prev, newRecord]);
-                setToast({ type: 'success', message: `Payroll for ${data.employee_name} created.` });
-              }
-              setShowForm(false);
-              setEditingRecord(null);
-              setSaving(false);
-            }, 400);
-          }}
+          onSave={handleFormSave}
           saving={saving}
         />
       )}
@@ -738,7 +811,9 @@ function DetailRow({ icon, label, value, children }) {
   );
 }
 
-function PayrollFormModal({ record, onClose, onSave, saving }) {
+function PayrollFormModal({ record, employees, onClose, onSave, saving }) {
+  const isEdit = !!record;
+  const [employeeId, setEmployeeId] = useState(record?.employee_id ?? (employees?.[0]?.id ?? ''));
   const [employeeName, setEmployeeName] = useState(record?.employee_name ?? '');
   const [department, setDepartment] = useState(record?.department ?? 'engineering');
   const [month, setMonth] = useState(record?.month ?? 'july');
@@ -750,6 +825,8 @@ function PayrollFormModal({ record, onClose, onSave, saving }) {
   const [notes, setNotes] = useState(record?.notes ?? '');
   const [status, setStatus] = useState(record?.status ?? 'pending');
 
+  const selectedEmployee = isEdit ? null : employees?.find((e) => e.id === employeeId);
+
   const netSalary = calculateNetSalary(
     basicSalary === '' ? 0 : basicSalary,
     bonus === '' ? 0 : bonus,
@@ -759,10 +836,13 @@ function PayrollFormModal({ record, onClose, onSave, saving }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!employeeName.trim() || !basicSalary) return;
+    if (!isEdit && !employeeId) return;
+    if (!isEdit && !basicSalary) return;
+    if (isEdit && !employeeName.trim()) return;
     onSave({
-      employee_name: employeeName.trim(),
-      department,
+      employee_id: isEdit ? record.employee_id : employeeId,
+      employee_name: isEdit ? employeeName.trim() : (selectedEmployee?.full_name || employeeName.trim()),
+      department: isEdit ? department : (selectedEmployee?.department || department),
       month,
       year,
       basic_salary: parseFloat(basicSalary) || 0,
@@ -790,14 +870,36 @@ function PayrollFormModal({ record, onClose, onSave, saving }) {
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4 overflow-y-auto">
           <FormField label="Employee" required>
-            <input
-              type="text"
-              value={employeeName}
-              onChange={(e) => setEmployeeName(e.target.value)}
-              placeholder="Enter employee name"
-              required
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-600"
-            />
+            {isEdit ? (
+              <input
+                type="text"
+                value={employeeName}
+                onChange={(e) => setEmployeeName(e.target.value)}
+                placeholder="Enter employee name"
+                required
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-600"
+              />
+            ) : (
+              <select
+                value={employeeId}
+                onChange={(e) => {
+                  const id = parseInt(e.target.value, 10);
+                  setEmployeeId(id);
+                  const emp = employees?.find((ee) => ee.id === id);
+                  if (emp) {
+                    setEmployeeName(emp.full_name || '');
+                    setDepartment(emp.department || 'engineering');
+                  }
+                }}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer text-slate-600"
+              >
+                <option value="">Select employee…</option>
+                {(employees || []).map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.full_name}</option>
+                ))}
+              </select>
+            )}
           </FormField>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
