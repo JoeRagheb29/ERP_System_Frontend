@@ -136,5 +136,12 @@ function normalizeRecord(r) {
     month: MONTH_MAP[r.month] ?? r.month,
     year: String(r.year),
     deduction: r.deductions ?? 0,
+    basic_salary: r.basic_salary != null ? Number(r.basic_salary) : null,
+    gross_salary: r.gross_salary != null ? Number(r.gross_salary) : null,
+    net_salary: r.net_salary != null ? Number(r.net_salary) : null,
+    bonus: r.bonus != null ? Number(r.bonus) : 0,
+    allowance: r.allowance != null ? Number(r.allowance) : 0,
+    deductions: r.deductions != null ? Number(r.deductions) : 0,
+    overtime_hours: r.overtime_hours != null ? Number(r.overtime_hours) : 0,
   };
 }
