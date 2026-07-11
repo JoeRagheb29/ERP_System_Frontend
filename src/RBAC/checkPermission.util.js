@@ -13,8 +13,21 @@ function checkPermission(permissions, resource, action) {
   console.log("resource: ", resource);
 
   if (!permissions) return false;
+
+  // Owners and admins see everything
   if (permissions.role === "owner" || permissions.role === "admin") return true;
-  return !!permissions.permissions?.[resource]?.[action];
+
+  const resourcePerm = permissions.permissions?.[resource];
+  // If backend returns a boolean (e.g. { permissions: { employees: true } })
+  if (resourcePerm === true) return true;
+
+  // If backend returns an object with action keys (e.g. { employees: { read: true, write: false } })
+  if (resourcePerm && typeof resourcePerm === 'object') {
+    const actionToCheck = action || 'read';
+    return !!resourcePerm[actionToCheck];
+  }
+
+  return false;
 }
 
 export default checkPermission;
