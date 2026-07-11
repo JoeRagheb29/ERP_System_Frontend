@@ -20,7 +20,7 @@ const NAV_SECTIONS = [
   {
     label: null,
     items: [
-      { path: '/dashboard',           label: 'Dashboard',        resource: null,              icon: faChartBar },
+      { path: '/dashboard',           label: 'Dashboard',        resource: null, roles: ['owner', 'admin'], icon: faChartBar },
       { path: '/profile',             label: 'Profile',          resource: null,              icon: faUser },
     ],
   },
@@ -95,10 +95,12 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-5">
         {NAV_SECTIONS.map((section, sIdx) => {
-          // Filter items the user doesn't have permission to see
-          const visibleItems = section.items.filter(
-            (item) => item.resource === null || checkPermission(permissions, item.resource)
-          );
+          // Filter items the user doesn't have permission to see or not in allowed roles
+          const visibleItems = section.items.filter((item) => {
+            // If item restricts to roles, enforce it
+            if (item.roles && (!user || !item.roles.includes(user.role))) return false;
+            return item.resource === null || checkPermission(permissions, item.resource);
+          });
 
           // If the whole section has no visible items, skip it entirely
           if (visibleItems.length === 0) return null;
