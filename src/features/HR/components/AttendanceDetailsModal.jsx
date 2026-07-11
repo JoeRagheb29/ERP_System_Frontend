@@ -69,7 +69,7 @@ export default function AttendanceDetailsModal({ isOpen, onClose, record, onEdit
               <p className="text-sm font-semibold text-slate-800 mt-0.5">{record.employee_name}</p>
             </DetailRow>
             <DetailRow icon={faBuilding} label="Department" value={record.department ? record.department.charAt(0).toUpperCase() + record.department.slice(1) : '\u2014'} />
-            <DetailRow icon={faIdBadge} label="Employee ID" value={String(record.employee_id)} />
+            <DetailRow icon={faIdBadge} label="Employee Number" value={record.employee_number ?? '\u2014'} />
             <DetailRow icon={faCalendar} label="Date" value={formatDate(record.attendance_date)} />
             <DetailRow icon={faClock} label="Check In" value={formatTime(record.check_in_time)} />
             <DetailRow icon={faClock} label="Check Out" value={formatTime(record.check_out_time)} />

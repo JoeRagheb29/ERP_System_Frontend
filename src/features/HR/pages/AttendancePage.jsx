@@ -152,7 +152,6 @@ export default function AttendancePage() {
 
   // When only page changes → clear selection and fetch that page
   useEffect(() => {
-    if (page === 1) return;
     setSelectedIds(new Set());
     doFetch(page);
   }, [page, doFetch]);
