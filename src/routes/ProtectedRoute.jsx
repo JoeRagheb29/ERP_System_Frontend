@@ -2,49 +2,93 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import checkPermission from '../RBAC/checkPermission.util';
 
+
 /**
- * ProtectedRoute — Dual-purpose route guard.
+ * ProtectedRoute — Route guard.
  *
- * No props       → authentication gate only (checks login + org membership).
- * requiredResource → also checks the user's permission map for that table.
+ * Without requiredResource:
+ *  - checks authentication only.
  *
- * Access is table-level: the backend returns { permissions: { "employees": true, ... } }.
- * No action distinction — the endpoint logic handles read/write differentiation.
+ * With requiredResource:
+ *  - checks user permission for that resource.
+ *
+ * With requiredRoles:
+ *  - checks user role access.
  */
 
-export function ProtectedRoute({ requiredResource, requiredAction, requiredRoles, children }) {
-  const { isAuthenticated, isInitializing, permissions, user } = useAuthStore();
+export function ProtectedRoute({
+  requiredResource,
+  requiredAction = 'read',
+  requiredRoles,
+  children,
+}) {
+
+  const {
+    isAuthenticated,
+    isInitializing,
+    permissions,
+    user,
+  } = useAuthStore();
+
+
   const location = useLocation();
 
-  // Wait until initializeAuth() finishes before making any routing decision
+
+  // Wait for auth initialization
   if (isInitializing) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
+
+  // Not logged in
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user && !user.org_id && location.pathname !== '/onboarding') {
+
+  // User must complete onboarding
+  if (
+    user &&
+    !user.org_id &&
+    location.pathname !== '/onboarding'
+  ) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Role-based guard: if route declares requiredRoles, ensure the current user's role is allowed
+
+  // Role-based protection
   if (requiredRoles && user) {
-    const allowed = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-    if (!allowed.includes(user.role)) {
+
+    const allowedRoles = Array.isArray(requiredRoles)
+      ? requiredRoles
+      : [requiredRoles];
+
+
+    if (!allowedRoles.includes(user.role)) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
 
+
+  // Permission-based protection
   if (requiredResource && permissions) {
-    const actionToCheck = requiredAction || 'read';
 
-    if (!checkPermission(permissions, requiredResource, actionToCheck)) {
+    const hasPermission = checkPermission(
+      permissions,
+      requiredResource,
+      requiredAction
+    );
+
+
+    if (!hasPermission) {
       return <Navigate to="/unauthorized" replace />;
     }
   }
-  
-  console.log("check FROM PROTECTED ROUTE", requiredResource, "action:", requiredAction);
+
+
   return children ? children : <Outlet />;
 }

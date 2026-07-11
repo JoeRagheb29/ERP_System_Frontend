@@ -1,3 +1,5 @@
+
+
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -14,6 +16,12 @@ import AttendancePage from './features/HR/pages/AttendancePage';
 import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
 import PayrollPage from './features/HR/pages/PayrollPage';
 import TopPerformancePage from './features/HR/pages/TopPerformancePage';
+import InventoryDashboardPage from './features/Inventory/pages/InventoryDashboardPage';
+import CategoriesPage from './features/Inventory/pages/CategoriesPage';
+import ProductsPage from './features/Inventory/pages/ProductsPage';
+import StockPage from './features/Inventory/pages/StockPage';
+import SuppliersPage from './features/Inventory/pages/SuppliersPage';
+import PurchaseOrdersPage from './features/Inventory/pages/PurchaseOrdersPage';
 
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -23,14 +31,19 @@ const Placeholder = ({ title }) => (
 );
 
 // دالة مساعدة سريعة (Helper) عشان نمنع تكرار الـ ProtectedRoute في كل سطر
+
 const protect = (resource, requiredRole = null, path, element) => ({
   path,
   element: (
-    <ProtectedRoute requiredResource={resource} requiredRoles={requiredRole}>
+    <ProtectedRoute
+      requiredResource={resource}
+      requiredRoles={requiredRole}
+    >
       {element}
     </ProtectedRoute>
-  )
+  ),
 });
+
 
 const getDefaultRoute = (user, permissions) => {
   if (!user || !permissions) return '/profile';
@@ -69,15 +82,58 @@ const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { index: true, element: <DefaultRouteRedirect /> },
-          // { index: true, element: <DashboardPage /> },
           protect('dashboard', ["owner", "admin"], '/dashboard', <DashboardPage />),
           { path: 'profile', element: <ProfilePage /> },
-          // Inventory Section
+          
+          {
+            path: 'inventory',
+            element: (
+              <ProtectedRoute requiredResource="products">
+                <InventoryDashboardPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'inventory/categories',
+            element: (
+              <ProtectedRoute requiredResource="product_categories">
+                <CategoriesPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'inventory/products',
+            element: (
+              <ProtectedRoute requiredResource="products">
+                <ProductsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'inventory/stock',
+            element: (
+              <ProtectedRoute requiredResource="inventory_stock">
+                <StockPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'inventory/suppliers',
+            element: (
+              <ProtectedRoute requiredResource="suppliers">
+                <SuppliersPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'inventory/purchase-orders',
+            element: (
+              <ProtectedRoute requiredResource="purchase_orders">
+                <PurchaseOrdersPage />
+              </ProtectedRoute>
+            ),
+          },
 
-          // protect('products',        'inventory/products',        <ProductsPage />),
-          // protect('inventory_stock', 'inventory/stock',           <StockLevelsPage />),
-          // protect('suppliers',       'inventory/suppliers',       <SuppliersPage />),
-          // protect('purchase_orders', 'inventory/purchase-orders', <PurchaseOrdersPage />),
           // HR Section
           {
             path: 'hr/employees',
@@ -121,22 +177,39 @@ const router = createBrowserRouter([
           },
 
           // Sales Section
-          // protect('sales_orders', 'sales/orders',    <SalesOrdersPage />),
-          // protect('customers',    'sales/customers', <CustomersPage />),
-          // protect('returns',      'sales/returns',   <ReturnsPage />),
+          protect(
+  "sales_orders",
+  null,
+  "sales/orders",
+  <Placeholder title="Sales Orders" />
+),
+
+protect(
+  "customers",
+  null,
+  "sales/customers",
+  <Placeholder title="Customers" />
+),
+
+protect(
+  "returns",
+  null,
+  "sales/returns",
+  <Placeholder title="Returns" />
+),
 
           // Admin Section
           protect("users", ["owner", "admin"], "admin/roles", <RolesPermissionsPage />),
-          // {
-          //   path: 'admin/roles',
-          //   element: (
-          //     <ProtectedRoute requiredResource="users">
-          //       <RolesPermissionsPage />
-          //     </ProtectedRoute>
-          //   ),
-          // },
-          // protect('activity_logs', 'admin/activity-logs', <ActivityLogsPage />),
-        ],
+          
+          
+          // Admin Section
+        
+protect(
+  "activity_logs",
+  null,
+  "admin/activity-logs",
+  <Placeholder title="Activity Logs" />
+),        ],
       },
     ],
   },
