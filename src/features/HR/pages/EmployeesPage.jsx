@@ -9,6 +9,7 @@ import EmployeeFormModal from '../components/EmployeeFormModal';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import EmployeeDetailModal from '../components/EmployeeDetailModal';
 import ImportModal from '../components/ImportModal';
+import EmployeesStatsCards from '../components/EmployeesStatsCards';
 import { Toast, Button } from '../../../shared/components';
 
 const DEPARTMENTS = [
@@ -406,6 +407,8 @@ export default function EmployeesPage() {
       </div>
 
       <Toast toast={toast} onDismiss={dismissToast} />
+
+      <EmployeesStatsCards employees={employees} />
 
       {/* ── Filters ── */}
       <div className="flex flex-wrap items-center gap-3" role="search" aria-label="Filter employees">

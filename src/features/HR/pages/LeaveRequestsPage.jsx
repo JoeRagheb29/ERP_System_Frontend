@@ -9,6 +9,7 @@ import LeaveRequestsTable from '../components/LeaveRequestsTable';
 import LeaveRequestFormModal from '../components/LeaveRequestFormModal';
 import LeaveRequestDetailsModal from '../components/LeaveRequestDetailsModal';
 import ImportModal from '../components/ImportModal';
+import LeaveRequestsStatsCards from '../components/LeaveRequestsStatsCards';
 import { Toast, Button } from '../../../shared/components';
 
 const DEPARTMENTS = [
@@ -453,6 +454,8 @@ export default function LeaveRequestsPage() {
       </div>
 
       <Toast toast={toast} onDismiss={dismissToast} />
+
+      <LeaveRequestsStatsCards records={records} />
 
       {/* ── Filters ── */}
       <div className="flex flex-wrap items-center gap-3" role="search" aria-label="Filter leave requests">
