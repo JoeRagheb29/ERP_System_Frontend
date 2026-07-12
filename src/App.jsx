@@ -17,6 +17,7 @@ import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
 import PayrollPage from './features/HR/pages/PayrollPage';
 import TopPerformancePage from './features/HR/pages/TopPerformancePage';
 import CustomersPage from './features/Sales/pages/CustomersPage';
+import SalesOrdersPage from './features/Sales/pages/SalesOrdersPage';
 import InventoryDashboardPage from './features/Inventory/pages/InventoryDashboardPage';
 import CategoriesPage from './features/Inventory/pages/CategoriesPage';
 import ProductsPage from './features/Inventory/pages/ProductsPage';
@@ -178,7 +179,14 @@ const router = createBrowserRouter([
           },
 
           // Sales Section
-          protect('sales_orders', 'sales/orders',    'Sales Orders'),
+          {
+            path: 'sales/orders',
+            element: (
+              <ProtectedRoute requiredResource="sales_orders">
+                <SalesOrdersPage />
+              </ProtectedRoute>
+            ),
+          },
           {
             path: 'sales/customers',
             element: (
