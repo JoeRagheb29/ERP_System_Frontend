@@ -1,20 +1,46 @@
-/**
- * checkPermission — Pure utility (not a hook).
- *
- * Use this inside .filter() / .map() calls (e.g. Sidebar nav items),
- * where React hook rules prohibit calling useHasPermission directly.
- */
+ /**
+  * checkPermission — Pure utility (not a hook).
+  *
+  * Used inside filters/maps (Sidebar etc.)
+  * to check user access without React hooks.
+  */
 
-function checkPermission(permissions, resource, action) {
-  
-  console.log("permissions:", permissions);
-  console.log("role:", permissions.role);
-  if (permissions.role === "owner" || permissions.role === "admin") console.log("returning true for owner/admin");
-  console.log("resource: ", resource);
+function checkPermission(permissions, resource, action = 'read') {
 
   if (!permissions) return false;
-  if (permissions.role === "owner" || permissions.role === "admin") return true;
-  return !!permissions.permissions?.[resource]?.[action];
+
+
+  // Owners and admins have full access
+  if (
+    permissions.role === "owner" ||
+    permissions.role === "admin"
+  ) {
+    return true;
+  }
+
+
+  const resourcePerm = permissions.permissions?.[resource];
+
+
+  // Backend returns boolean:
+  // { employees: true }
+  if (resourcePerm === true) {
+    return true;
+  }
+
+
+  // Backend returns object:
+  // { employees: { read: true, write: false } }
+  if (
+    resourcePerm &&
+    typeof resourcePerm === "object"
+  ) {
+    return !!resourcePerm[action];
+  }
+
+
+  return false;
 }
+
 
 export default checkPermission;
