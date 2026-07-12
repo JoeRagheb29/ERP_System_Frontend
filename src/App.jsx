@@ -14,6 +14,7 @@ import AttendancePage from './features/HR/pages/AttendancePage';
 import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
 import PayrollPage from './features/HR/pages/PayrollPage';
 import TopPerformancePage from './features/HR/pages/TopPerformancePage';
+import CustomersPage from './features/Sales/pages/CustomersPage';
 
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -100,7 +101,14 @@ const router = createBrowserRouter([
 
           // Sales Section
           protect('sales_orders', 'sales/orders',    'Sales Orders'),
-          protect('customers',    'sales/customers', 'Customers'),
+          {
+            path: 'sales/customers',
+            element: (
+              <ProtectedRoute requiredResource="customers">
+                <CustomersPage />
+              </ProtectedRoute>
+            ),
+          },
           protect('returns',      'sales/returns',   'Returns'),
 
           // Admin Section
