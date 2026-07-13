@@ -8,6 +8,7 @@ import {
   faBan,
   faClock,
   faArrowTrendDown,
+  faWallet,
 } from '@fortawesome/free-solid-svg-icons';
 
 function formatSalary(value) {
@@ -24,6 +25,15 @@ const cards = [
     subtitle: 'Gross salaries',
     colorClass: 'bg-blue-50',
     iconColor: 'text-blue-600',
+    format: (v) => formatSalary(v),
+  },
+  {
+    key: 'totalNetSalary',
+    icon: faWallet,
+    title: 'Total Net Salary',
+    subtitle: 'After deductions',
+    colorClass: 'bg-green-50',
+    iconColor: 'text-green-600',
     format: (v) => formatSalary(v),
   },
   {
@@ -85,6 +95,7 @@ const cards = [
 export default function PayrollStatsCards({ records }) {
   const stats = useMemo(() => {
     const totalPayroll = records.reduce((sum, r) => sum + (r.gross_salary || 0), 0);
+    const totalNetSalary = records.reduce((sum, r) => sum + (r.net_salary || 0), 0);
     const totalEmployees = records.length;
     const paidPayrolls = records.filter((r) => r.status === 'paid').length;
     const pendingPayrolls = records.filter((r) => r.status === 'pending').length;
@@ -103,6 +114,7 @@ export default function PayrollStatsCards({ records }) {
 
     return {
       totalPayroll,
+      totalNetSalary,
       totalEmployees,
       paidPayrolls,
       pendingPayrolls,

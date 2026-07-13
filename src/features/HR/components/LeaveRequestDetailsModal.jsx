@@ -73,6 +73,7 @@ export default function LeaveRequestDetailsModal({ isOpen, onClose, record, onEd
             </DetailRow>
             <DetailRow icon={faBuilding} label="Department" value={record.department ? record.department.charAt(0).toUpperCase() + record.department.slice(1) : '\u2014'} />
             <DetailRow icon={faIdBadge} label="Employee Number" value={record.employee_number ?? '\u2014'} />
+            <DetailRow icon={faIdBadge} label="Employee ID" value={String(record.employee_id)} />
             <DetailRow icon={faFlag} label="Leave Type" value={LEAVE_TYPE_LABELS[record.leave_type] || record.leave_type} />
             <DetailRow icon={faCalendar} label="Start Date" value={formatDate(record.start_date)} />
             <DetailRow icon={faCalendar} label="End Date" value={formatDate(record.end_date)} />

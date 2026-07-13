@@ -143,7 +143,7 @@ export default function PayrollDetailsModal({ isOpen, onClose, record }) {
           <SectionHeader icon={faClipboardList} title="Attendance Summary" />
           <div className="space-y-1 pl-0">
             <DetailRow icon={faCalendar} label="Working Days" value={workingDays != null ? String(workingDays) : '\u2014'} />
-            <DetailRow icon={faClipboardList} label="Present Days" value={record.present_days != null ? String(record.present_days) : '\u2014'} />
+            <DetailRow icon={faClipboardList} label="Present Days" value={record.days_worked != null ? String(record.days_worked) : '\u2014'} />
             <DetailRow icon={faClipboardList} label="Absent Days" value={record.absences != null ? String(record.absences) : '\u2014'} />
             <DetailRow icon={faClipboardList} label="Leave Days" value={record.leave_days != null ? String(record.leave_days) : '\u2014'} />
             <DetailRow icon={faClock} label="Overtime Hours" value={record.overtime_hours != null ? String(record.overtime_hours) : '\u2014'} />

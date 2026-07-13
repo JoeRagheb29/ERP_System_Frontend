@@ -10,6 +10,7 @@ import AttendanceFormModal from '../components/AttendanceFormModal';
 
 import AttendanceDetailsModal from '../components/AttendanceDetailsModal';
 import ImportModal from '../components/ImportModal';
+import AttendanceStatsCards from '../components/AttendanceStatsCards';
 import { Toast, Button } from '../../../shared/components';
 
 const DEPARTMENTS = [
@@ -152,6 +153,7 @@ export default function AttendancePage() {
 
   // When only page changes → clear selection and fetch that page
   useEffect(() => {
+    if (page === 1) return;
     setSelectedIds(new Set());
     doFetch(page);
   }, [page, doFetch]);
@@ -458,6 +460,8 @@ export default function AttendancePage() {
       </div>
 
       <Toast toast={toast} onDismiss={dismissToast} />
+
+      <AttendanceStatsCards records={records} />
 
       {/* ── Filters ── */}
       <div className="flex flex-wrap items-center gap-3" role="search" aria-label="Filter attendance records">
