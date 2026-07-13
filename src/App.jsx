@@ -1,5 +1,3 @@
-
-
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -17,6 +15,7 @@ import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
 import PayrollPage from './features/HR/pages/PayrollPage';
 import CustomersPage from './features/Sales/pages/CustomersPage';
 import SalesOrdersPage from './features/Sales/pages/SalesOrdersPage';
+import ReturnsPage from './features/Sales/pages/ReturnsPage';
 import InventoryDashboardPage from './features/Inventory/pages/InventoryDashboardPage';
 import CategoriesPage from './features/Inventory/pages/CategoriesPage';
 import ProductsPage from './features/Inventory/pages/ProductsPage';
@@ -136,6 +135,7 @@ const router = createBrowserRouter([
           },
 
           // HR Section
+<<<<<<< HEAD
           {
             path: 'hr/employees',
             element: (
@@ -168,6 +168,54 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
+=======
+          protect("employees", ["owner", "admin", "hr_manager"], "hr/employees", <EmployeesPage />),
+          protect("attendance", ["owner", "admin", "hr_manager"], "hr/attendance", <AttendancePage />),
+          protect("leave_requests", ["owner", "admin", "hr_manager"], "hr/leave-requests", <LeaveRequestsPage />),
+          protect("payroll", ["owner", "admin", "hr_manager"], "hr/payroll", <PayrollPage />),
+          protect("employees", ["owner", "admin", "hr_manager"], "hr/top-performance", <TopPerformancePage />),
+          // {
+          //   path: 'hr/employees',
+          //   element: (
+          //     <ProtectedRoute requiredResource="employees">
+          //       <EmployeesPage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/attendance',
+          //   element: (
+          //     <ProtectedRoute requiredResource="attendance">
+          //       <AttendancePage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/leave-requests',
+          //   element: (
+          //     <ProtectedRoute requiredResource="leave_requests">
+          //       <LeaveRequestsPage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/payroll',
+          //   element: (
+          //     <ProtectedRoute requiredResource="payroll">
+          //       <PayrollPage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/top-performance',
+          //   element: (
+          //     <ProtectedRoute requiredResource="employees">
+          //       <TopPerformancePage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+
+>>>>>>> 1927837ebfc1510955fc01d3513c23be00951f99
           // Sales Section
           {
             path: 'sales/orders',
@@ -185,7 +233,14 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          protect('returns',      'sales/returns',   'Returns'),
+          {
+            path: 'sales/returns',
+            element: (
+              <ProtectedRoute requiredResource="returns">
+                <ReturnsPage />
+              </ProtectedRoute>
+            ),
+          },
 
           // Admin Section
           protect("users", ["owner", "admin"], "admin/roles", <RolesPermissionsPage />),
