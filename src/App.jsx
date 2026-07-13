@@ -135,7 +135,7 @@ const router = createBrowserRouter([
           },
 
           // HR Section
-<<<<<<< HEAD
+
           {
             path: 'hr/employees',
             element: (
@@ -168,7 +168,7 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-=======
+
           protect("employees", ["owner", "admin", "hr_manager"], "hr/employees", <EmployeesPage />),
           protect("attendance", ["owner", "admin", "hr_manager"], "hr/attendance", <AttendancePage />),
           protect("leave_requests", ["owner", "admin", "hr_manager"], "hr/leave-requests", <LeaveRequestsPage />),
@@ -215,7 +215,6 @@ const router = createBrowserRouter([
           //   ),
           // },
 
->>>>>>> 1927837ebfc1510955fc01d3513c23be00951f99
           // Sales Section
           {
             path: 'sales/orders',
