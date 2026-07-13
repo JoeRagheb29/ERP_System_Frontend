@@ -12,7 +12,6 @@ import {
   faLayerGroup,
   faTruck,
   faTags,
-  faStar,
   faUsers,
   faShoppingCart,
   faUserCheck,
