@@ -16,21 +16,8 @@ import checkPermission from '../RBAC/checkPermission.util';
  *  - checks user role access.
  */
 
-export function ProtectedRoute({
-  requiredResource,
-  requiredAction = 'read',
-  requiredRoles,
-  children,
-}) {
-
-  const {
-    isAuthenticated,
-    isInitializing,
-    permissions,
-    user,
-  } = useAuthStore();
-
-
+export function ProtectedRoute({ requiredResource, requiredAction = 'read', requiredRoles = null, children }) {
+  const { isAuthenticated, isInitializing, permissions, user } = useAuthStore();
   const location = useLocation();
 
 

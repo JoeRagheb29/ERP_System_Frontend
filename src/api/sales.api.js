@@ -63,3 +63,35 @@ export async function deleteSalesOrder(id) {
   const { data } = await apiClient.delete(`/sales-orders/${id}`);
   return data;
 }
+
+// ── Returns ──────────────────────────────────────────────────────────────
+
+// GET /returns/
+export async function getReturns(params) {
+  const { data } = await apiClient.get('/returns/', { params });
+  return data;
+}
+
+// GET /returns/:id
+export async function getReturnById(id) {
+  const { data } = await apiClient.get(`/returns/${id}`);
+  return data;
+}
+
+// POST /returns/
+export async function createReturn(payload) {
+  const { data } = await apiClient.post('/returns/', payload);
+  return data;
+}
+
+// PUT /returns/:id
+export async function updateReturn(id, payload) {
+  const { data } = await apiClient.put(`/returns/${id}`, payload);
+  return data;
+}
+
+// DELETE /returns/:id
+export async function deleteReturn(id) {
+  const { data } = await apiClient.delete(`/returns/${id}`);
+  return data;
+}
