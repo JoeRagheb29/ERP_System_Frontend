@@ -92,12 +92,6 @@ const NAV_SECTIONS = [
     label: 'Human Resources',
     items: [
       {
-        path: '/hr/top-performance',
-        label: 'Top Performance',
-        resource: 'employees',
-        icon: faStar,
-      },
-      {
         path: '/hr/employees',
         label: 'Employees',
         resource: 'employees',

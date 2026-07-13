@@ -39,6 +39,23 @@ export async function importAttendance(file) {
   return data;
 }
 
+export async function getAttendanceStats() {
+  const { data } = await apiClient.get('/attendance/stats');
+  return data;
+}
+
+export async function bulkDeleteAttendance(params) {
+  const { data } = await apiClient.delete('/attendance/bulk', { params });
+  return data;
+}
+
+export async function bulkUpdateAttendanceStatus(newStatus, params) {
+  const { data } = await apiClient.post('/attendance/bulk-status', null, {
+    params: { new_status: newStatus, ...params },
+  });
+  return data;
+}
+
 export async function exportAttendance(params) {
   const { data } = await apiClient.get('/attendance/export', {
     params,

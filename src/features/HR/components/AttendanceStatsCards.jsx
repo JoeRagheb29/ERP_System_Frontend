@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCheckCircle,
@@ -6,10 +6,11 @@ import {
   faClock,
   faCalendar,
 } from '@fortawesome/free-solid-svg-icons';
+import { getAttendanceStats } from '../../../api/attendance.api';
 
 const cards = [
   {
-    key: 'present',
+    key: 'present_today',
     icon: faCheckCircle,
     title: 'Present Today',
     subtitle: 'On time arrivals',
@@ -17,7 +18,7 @@ const cards = [
     iconColor: 'text-emerald-600',
   },
   {
-    key: 'absent',
+    key: 'absent_today',
     icon: faBan,
     title: 'Absent Today',
     subtitle: 'No show',
@@ -25,7 +26,7 @@ const cards = [
     iconColor: 'text-rose-600',
   },
   {
-    key: 'late',
+    key: 'late_today',
     icon: faClock,
     title: 'Late Today',
     subtitle: 'Arrived after start',
@@ -33,7 +34,7 @@ const cards = [
     iconColor: 'text-amber-600',
   },
   {
-    key: 'thisMonth',
+    key: 'this_month',
     icon: faCalendar,
     title: 'This Month',
     subtitle: 'Total records',
@@ -42,21 +43,26 @@ const cards = [
   },
 ];
 
-export default function AttendanceStatsCards({ records }) {
-  const stats = useMemo(() => {
-    const present = records.filter((r) => r.status === 'present').length;
-    const absent = records.filter((r) => r.status === 'absent').length;
-    const late = records.filter((r) => r.status === 'late').length;
+export default function AttendanceStatsCards() {
+  const [stats, setStats] = useState({
+    present_today: 0,
+    absent_today: 0,
+    late_today: 0,
+    this_month: 0,
+  });
 
-    const now = new Date();
-    const thisMonth = records.filter((r) => {
-      if (!r.attendance_date) return false;
-      const d = new Date(r.attendance_date);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    }).length;
-
-    return { present, absent, late, thisMonth };
-  }, [records]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getAttendanceStats();
+        if (!cancelled) setStats(data);
+      } catch {
+        // silently keep defaults
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">

@@ -82,6 +82,7 @@ export default function AttendanceTable({
   selectedIds,
   onSelectionChange,
   enableSelection,
+  allRowsSelected,
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -138,10 +139,10 @@ export default function AttendanceTable({
                 {enableSelection && (
                   <th className="px-4 py-3 sticky top-0 z-10 bg-white w-10">
                     <SelectAllCheckbox
-                      checked={records.length > 0 && selectedIds.size === records.length}
-                      indeterminate={selectedIds.size > 0 && selectedIds.size < records.length}
+                      checked={allRowsSelected || (records.length > 0 && selectedIds.size === records.length)}
+                      indeterminate={!allRowsSelected && selectedIds.size > 0 && selectedIds.size < records.length}
                       onChange={() => {
-                        if (selectedIds.size === records.length) {
+                        if (allRowsSelected || selectedIds.size === records.length) {
                           onSelectionChange(new Set());
                         } else {
                           onSelectionChange(new Set(records.map((r) => r.id)));

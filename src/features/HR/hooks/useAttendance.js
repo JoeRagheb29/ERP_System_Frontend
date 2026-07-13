@@ -8,6 +8,8 @@ import {
   downloadAttendanceTemplate,
   importAttendance,
   exportAttendance,
+  bulkDeleteAttendance,
+  bulkUpdateAttendanceStatus,
 } from '../../../api/attendance.api';
 
 export function useAttendance() {
@@ -201,6 +203,36 @@ export function useAttendance() {
     }
   }, []);
 
+  const bulkDelete = useCallback(async (filterParams = {}) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await bulkDeleteAttendance(filterParams);
+      return result;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Bulk delete failed.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const bulkStatusChange = useCallback(async (newStatus, filterParams = {}) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await bulkUpdateAttendanceStatus(newStatus, filterParams);
+      return result;
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === 'string' ? detail : 'Bulk status change failed.');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     create,
     fetchAll,
@@ -210,6 +242,8 @@ export function useAttendance() {
     getImportTemplate,
     importFile,
     exportData,
+    bulkDelete,
+    bulkStatusChange,
     isLoading,
     error,
   };

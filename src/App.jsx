@@ -15,7 +15,6 @@ import EmployeesPage from './features/HR/pages/EmployeesPage';
 import AttendancePage from './features/HR/pages/AttendancePage';
 import LeaveRequestsPage from './features/HR/pages/LeaveRequestsPage';
 import PayrollPage from './features/HR/pages/PayrollPage';
-import TopPerformancePage from './features/HR/pages/TopPerformancePage';
 import CustomersPage from './features/Sales/pages/CustomersPage';
 import SalesOrdersPage from './features/Sales/pages/SalesOrdersPage';
 import InventoryDashboardPage from './features/Inventory/pages/InventoryDashboardPage';
@@ -169,15 +168,6 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          {
-            path: 'hr/top-performance',
-            element: (
-              <ProtectedRoute requiredResource="employees">
-                <TopPerformancePage />
-              </ProtectedRoute>
-            ),
-          },
-
           // Sales Section
           {
             path: 'sales/orders',

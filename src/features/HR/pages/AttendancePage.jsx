@@ -37,7 +37,7 @@ const PAGE_SIZE = 20;
 export default function AttendancePage() {
   const { permissions } = useAuthStore();
   const canEdit = checkPermission(permissions, 'attendance') && permissions?.role !== 'employee';
-  const { fetchAll, create, update, remove, getImportTemplate, importFile, exportData } = useAttendance();
+  const { fetchAll, create, update, remove, getImportTemplate, importFile, exportData, bulkDelete, bulkStatusChange } = useAttendance();
 
   // ── Data state ──
   const [records, setRecords] = useState([]);
@@ -75,6 +75,7 @@ export default function AttendancePage() {
   const [showImport, setShowImport] = useState(false);
   const [importing, setImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectAllMode, setSelectAllMode] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [showBulkStatus, setShowBulkStatus] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
@@ -116,6 +117,12 @@ export default function AttendancePage() {
     }
   }, [fetchAll]);
 
+  // Wrapper that exits selectAllMode whenever the user manually touches selection
+  const handleSelectionChange = useCallback((nextIds) => {
+    setSelectedIds(nextIds);
+    setSelectAllMode(false);
+  }, []);
+
   // Fetch employees for the form dropdown
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +148,7 @@ export default function AttendancePage() {
   // When search/filter fields change (not sort) → clear selection, reset to page 1, fetch
   useEffect(() => {
     setSelectedIds(new Set());
+    setSelectAllMode(false);
     setPage(1);
     doFetch(1);
   }, [debouncedSearch, department, statusFilter, dateFrom, dateTo, doFetch]);
@@ -155,6 +163,7 @@ export default function AttendancePage() {
   useEffect(() => {
     if (page === 1) return;
     setSelectedIds(new Set());
+    setSelectAllMode(false);
     doFetch(page);
   }, [page, doFetch]);
 
@@ -304,17 +313,34 @@ export default function AttendancePage() {
   }, [getImportTemplate]);
 
   // ── Bulk actions ──
+  const buildFilterParams = useCallback(() => {
+    const params = {};
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (department) params.department = department;
+    if (statusFilter) params.status = statusFilter;
+    if (dateFrom) params.attendance_date_from = dateFrom;
+    if (dateTo) params.attendance_date_to = dateTo;
+    return params;
+  }, [debouncedSearch, department, statusFilter, dateFrom, dateTo]);
+
   const handleBulkDelete = useCallback(async () => {
     setBulkBusy(true);
     try {
-      const ids = [...selectedIds];
-      let deleted = 0;
-      for (const id of ids) {
-        await remove(id);
-        deleted++;
+      if (selectAllMode) {
+        const filterParams = buildFilterParams();
+        const result = await bulkDelete(filterParams);
+        setToast({ type: 'success', message: `${result.deleted} record(s) deleted.` });
+      } else {
+        const ids = [...selectedIds];
+        let deleted = 0;
+        for (const id of ids) {
+          await remove(id);
+          deleted++;
+        }
+        setToast({ type: 'success', message: `${deleted} record(s) deleted.` });
       }
-      setToast({ type: 'success', message: `${deleted} record(s) deleted.` });
       setSelectedIds(new Set());
+      setSelectAllMode(false);
       setShowBulkDeleteConfirm(false);
       doFetch(1);
     } catch {
@@ -322,19 +348,26 @@ export default function AttendancePage() {
     } finally {
       setBulkBusy(false);
     }
-  }, [remove, selectedIds, doFetch]);
+  }, [remove, selectedIds, selectAllMode, buildFilterParams, bulkDelete, doFetch]);
 
   const handleBulkStatus = useCallback(async (newStatus) => {
     setBulkBusy(true);
     try {
-      const ids = [...selectedIds];
-      let updated = 0;
-      for (const id of ids) {
-        await update(id, { status: newStatus });
-        updated++;
+      if (selectAllMode) {
+        const filterParams = buildFilterParams();
+        const result = await bulkStatusChange(newStatus, filterParams);
+        setToast({ type: 'success', message: `${result.updated} record(s) updated.` });
+      } else {
+        const ids = [...selectedIds];
+        let updated = 0;
+        for (const id of ids) {
+          await update(id, { status: newStatus });
+          updated++;
+        }
+        setToast({ type: 'success', message: `${updated} record(s) updated.` });
       }
-      setToast({ type: 'success', message: `${updated} record(s) updated.` });
       setSelectedIds(new Set());
+      setSelectAllMode(false);
       setShowBulkStatus(false);
       doFetch(1);
     } catch {
@@ -342,11 +375,11 @@ export default function AttendancePage() {
     } finally {
       setBulkBusy(false);
     }
-  }, [update, selectedIds, doFetch]);
+  }, [update, selectedIds, selectAllMode, buildFilterParams, bulkStatusChange, doFetch]);
 
   const handleBulkExport = useCallback(async (fileFormat) => {
     try {
-      const params = { format: fileFormat, scope: 'filtered', page_size: 100 };
+      const params = { format: fileFormat, scope: 'all', ...buildFilterParams() };
       const blob = await exportData(params);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -359,7 +392,7 @@ export default function AttendancePage() {
     } catch {
       setToast({ type: 'error', message: 'Export selected failed.' });
     }
-  }, [exportData]);
+  }, [exportData, buildFilterParams]);
 
   // Close export menu on outside click, Escape, or scroll
   useEffect(() => {
@@ -393,6 +426,7 @@ export default function AttendancePage() {
     setSortBy('attendance_date');
     setSortOrder('desc');
     setSelectedIds(new Set());
+    setSelectAllMode(false);
     setPage(1);
   };
 
@@ -533,26 +567,38 @@ export default function AttendancePage() {
       </div>
 
       {/* ── Bulk Action Bar ── */}
-      {selectedIds.size > 0 && canEdit && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
-          <span className="text-sm font-medium text-blue-700">{selectedIds.size} selected</span>
-          <div className="flex items-center gap-2 ml-auto">
-            <Button onClick={() => setShowBulkStatus(true)} loading={bulkBusy}>
-              <FontAwesomeIcon icon={faFlag} className="w-3.5 h-3.5" />
-              Change Status
-            </Button>
-            <Button variant="ghost-danger" onClick={() => setShowBulkDeleteConfirm(true)} loading={bulkBusy}>
-              <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
-              Delete Selected
-            </Button>
-            <Button onClick={() => handleBulkExport('xlsx')}>
-              <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5" />
-              Export Selected
-            </Button>
-            <Button onClick={() => setSelectedIds(new Set())}>
-              Clear
-            </Button>
+      {(selectAllMode || selectedIds.size > 0) && canEdit && (
+        <div className="flex flex-col px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-blue-700">
+              {selectAllMode ? `${total} selected` : `${selectedIds.size} selected`}
+            </span>
+            <div className="flex items-center gap-2 ml-auto">
+              <Button onClick={() => setShowBulkStatus(true)} loading={bulkBusy}>
+                <FontAwesomeIcon icon={faFlag} className="w-3.5 h-3.5" />
+                Change Status
+              </Button>
+              <Button variant="ghost-danger" onClick={() => setShowBulkDeleteConfirm(true)} loading={bulkBusy}>
+                <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
+                Delete Selected
+              </Button>
+              <Button onClick={() => handleBulkExport('xlsx')}>
+                <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5" />
+                Export Selected
+              </Button>
+              <Button onClick={() => { setSelectedIds(new Set()); setSelectAllMode(false); }}>
+                Clear
+              </Button>
+            </div>
           </div>
+          {!selectAllMode && selectedIds.size === records.length && records.length < total && (
+            <button
+              onClick={() => setSelectAllMode(true)}
+              className="mt-1 text-xs text-blue-600 hover:text-blue-800 underline text-left"
+            >
+              All {records.length} records on this page are selected. Select all {total} records?
+            </button>
+          )}
         </div>
       )}
 
@@ -571,8 +617,9 @@ export default function AttendancePage() {
         onSort={handleSort}
         canEdit={canEdit}
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={handleSelectionChange}
         enableSelection={true}
+        allRowsSelected={selectAllMode}
       />
 
       {/* ── Pagination ── */}
