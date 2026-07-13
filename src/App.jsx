@@ -16,6 +16,7 @@ import PayrollPage from './features/HR/pages/PayrollPage';
 import TopPerformancePage from './features/HR/pages/TopPerformancePage';
 import CustomersPage from './features/Sales/pages/CustomersPage';
 import SalesOrdersPage from './features/Sales/pages/SalesOrdersPage';
+import ReturnsPage from './features/Sales/pages/ReturnsPage';
 import InventoryDashboardPage from './features/Inventory/pages/InventoryDashboardPage';
 import CategoriesPage from './features/Inventory/pages/CategoriesPage';
 import ProductsPage from './features/Inventory/pages/ProductsPage';
@@ -198,7 +199,14 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          protect('returns',      'sales/returns',   'Returns'),
+          {
+            path: 'sales/returns',
+            element: (
+              <ProtectedRoute requiredResource="returns">
+                <ReturnsPage />
+              </ProtectedRoute>
+            ),
+          },
 
           // Admin Section
           protect("users", ["owner", "admin"], "admin/roles", <RolesPermissionsPage />),
