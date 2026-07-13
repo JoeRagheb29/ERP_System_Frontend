@@ -12,7 +12,7 @@ import checkPermission from '../RBAC/checkPermission.util';
  * No action distinction — the endpoint logic handles read/write differentiation.
  */
 
-export function ProtectedRoute({ requiredResource, requiredAction, requiredRoles, children }) {
+export function ProtectedRoute({ requiredResource, requiredAction, requiredRoles = null, children }) {
   const { isAuthenticated, isInitializing, permissions, user } = useAuthStore();
   const location = useLocation();
 

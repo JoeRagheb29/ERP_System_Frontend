@@ -69,56 +69,62 @@ const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { index: true, element: <DefaultRouteRedirect /> },
-          // { index: true, element: <DashboardPage /> },
           protect('dashboard', ["owner", "admin"], '/dashboard', <DashboardPage />),
           { path: 'profile', element: <ProfilePage /> },
+          // { index: true, element: <DashboardPage /> },
+          
           // Inventory Section
-
           // protect('products',        'inventory/products',        <ProductsPage />),
           // protect('inventory_stock', 'inventory/stock',           <StockLevelsPage />),
           // protect('suppliers',       'inventory/suppliers',       <SuppliersPage />),
           // protect('purchase_orders', 'inventory/purchase-orders', <PurchaseOrdersPage />),
+
           // HR Section
-          {
-            path: 'hr/employees',
-            element: (
-              <ProtectedRoute requiredResource="employees">
-                <EmployeesPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/attendance',
-            element: (
-              <ProtectedRoute requiredResource="attendance">
-                <AttendancePage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/leave-requests',
-            element: (
-              <ProtectedRoute requiredResource="leave_requests">
-                <LeaveRequestsPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/payroll',
-            element: (
-              <ProtectedRoute requiredResource="payroll">
-                <PayrollPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/top-performance',
-            element: (
-              <ProtectedRoute requiredResource="employees">
-                <TopPerformancePage />
-              </ProtectedRoute>
-            ),
-          },
+          protect("employees", ["owner", "admin", "hr_manager"], "hr/employees", <EmployeesPage />),
+          protect("attendance", ["owner", "admin", "hr_manager"], "hr/attendance", <AttendancePage />),
+          protect("leave_requests", ["owner", "admin", "hr_manager"], "hr/leave-requests", <LeaveRequestsPage />),
+          protect("payroll", ["owner", "admin", "hr_manager"], "hr/payroll", <PayrollPage />),
+          protect("employees", ["owner", "admin", "hr_manager"], "hr/top-performance", <TopPerformancePage />),
+          // {
+          //   path: 'hr/employees',
+          //   element: (
+          //     <ProtectedRoute requiredResource="employees">
+          //       <EmployeesPage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/attendance',
+          //   element: (
+          //     <ProtectedRoute requiredResource="attendance">
+          //       <AttendancePage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/leave-requests',
+          //   element: (
+          //     <ProtectedRoute requiredResource="leave_requests">
+          //       <LeaveRequestsPage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/payroll',
+          //   element: (
+          //     <ProtectedRoute requiredResource="payroll">
+          //       <PayrollPage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
+          // {
+          //   path: 'hr/top-performance',
+          //   element: (
+          //     <ProtectedRoute requiredResource="employees">
+          //       <TopPerformancePage />
+          //     </ProtectedRoute>
+          //   ),
+          // },
 
           // Sales Section
           // protect('sales_orders', 'sales/orders',    <SalesOrdersPage />),
