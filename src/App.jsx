@@ -22,6 +22,7 @@ import ProductsPage from './features/Inventory/pages/ProductsPage';
 import StockPage from './features/Inventory/pages/StockPage';
 import SuppliersPage from './features/Inventory/pages/SuppliersPage';
 import PurchaseOrdersPage from './features/Inventory/pages/PurchaseOrdersPage';
+// import TopPerformancePage from './features/HR/pages/TopPerformancePage';
 
 const Placeholder = ({ title }) => (
   <div className="p-2">
@@ -134,46 +135,8 @@ const router = createBrowserRouter([
             ),
           },
 
-          // HR Section
+          // // HR Section
 
-          {
-            path: 'hr/employees',
-            element: (
-              <ProtectedRoute requiredResource="employees">
-                <EmployeesPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/attendance',
-            element: (
-              <ProtectedRoute requiredResource="attendance">
-                <AttendancePage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/leave-requests',
-            element: (
-              <ProtectedRoute requiredResource="leave_requests">
-                <LeaveRequestsPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'hr/payroll',
-            element: (
-              <ProtectedRoute requiredResource="payroll">
-                <PayrollPage />
-              </ProtectedRoute>
-            ),
-          },
-
-          protect("employees", ["owner", "admin", "hr_manager"], "hr/employees", <EmployeesPage />),
-          protect("attendance", ["owner", "admin", "hr_manager"], "hr/attendance", <AttendancePage />),
-          protect("leave_requests", ["owner", "admin", "hr_manager"], "hr/leave-requests", <LeaveRequestsPage />),
-          protect("payroll", ["owner", "admin", "hr_manager"], "hr/payroll", <PayrollPage />),
-          protect("employees", ["owner", "admin", "hr_manager"], "hr/top-performance", <TopPerformancePage />),
           // {
           //   path: 'hr/employees',
           //   element: (
@@ -206,14 +169,11 @@ const router = createBrowserRouter([
           //     </ProtectedRoute>
           //   ),
           // },
-          // {
-          //   path: 'hr/top-performance',
-          //   element: (
-          //     <ProtectedRoute requiredResource="employees">
-          //       <TopPerformancePage />
-          //     </ProtectedRoute>
-          //   ),
-          // },
+
+          protect("employees", ["owner", "admin", "hr_manager"], "hr/employees", <EmployeesPage />),
+          protect("attendance", ["owner", "admin", "hr_manager"], "hr/attendance", <AttendancePage />),
+          protect("leave_requests", ["owner", "admin", "hr_manager"], "hr/leave-requests", <LeaveRequestsPage />),
+          protect("payroll", ["owner", "admin", "hr_manager"], "hr/payroll", <PayrollPage />),
 
           // Sales Section
           {

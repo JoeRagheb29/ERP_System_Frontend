@@ -109,7 +109,7 @@ export async function getAttachments(employeeId) {
 }
 
 export function getAttachmentDownloadUrl(employeeId, attachmentId) {
-  return `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/employees/${employeeId}/attachments/${attachmentId}/download`;
+  return `${import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'}/employees/${employeeId}/attachments/${attachmentId}/download`;
 }
 
 export async function deleteAttachment(employeeId, attachmentId) {
