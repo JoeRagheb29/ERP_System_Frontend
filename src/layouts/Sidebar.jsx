@@ -12,13 +12,11 @@ import {
   faLayerGroup,
   faTruck,
   faTags,
-  faStar,
   faUsers,
   faShoppingCart,
   faUserCheck,
   faRotateLeft,
   faShieldHalved,
-  faListCheck,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { useAuthStore } from '../store/auth.store';
@@ -150,12 +148,6 @@ const NAV_SECTIONS = [
         label: 'Roles & Permissions',
         resource: 'users',
         icon: faShieldHalved,
-      },
-      {
-        path: '/admin/activity-logs',
-        label: 'Activity Logs',
-        resource: 'activity_logs',
-        icon: faListCheck,
       },
     ],
   },

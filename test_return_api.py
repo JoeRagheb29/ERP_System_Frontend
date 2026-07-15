@@ -1,7 +1,7 @@
 import http.client
 import json
 
-conn = http.client.HTTPConnection('localhost', 8000, timeout=5)
+conn = http.client.HTTPConnection('127.0.0.1', 8000, timeout=5)
 try:
     conn.request('GET', '/returns/?page=1&page_size=20')
     resp = conn.getresponse()
