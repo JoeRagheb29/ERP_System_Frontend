@@ -22,6 +22,8 @@ import ProductsPage from './features/Inventory/pages/ProductsPage';
 import StockPage from './features/Inventory/pages/StockPage';
 import SuppliersPage from './features/Inventory/pages/SuppliersPage';
 import PurchaseOrdersPage from './features/Inventory/pages/PurchaseOrdersPage';
+// import LandingPage from './features/Landing/pages/LandingPage';
+
 // import TopPerformancePage from './features/HR/pages/TopPerformancePage';
 
 const Placeholder = ({ title }) => (
@@ -85,15 +87,8 @@ const router = createBrowserRouter([
           { index: true, element: <DefaultRouteRedirect /> },
           protect('dashboard', ["owner", "admin"], '/dashboard', <DashboardPage />),
           { path: 'profile', element: <ProfilePage /> },
-          
-          {
-            path: 'inventory',
-            element: (
-              <ProtectedRoute requiredResource="products">
-                <InventoryDashboardPage />
-              </ProtectedRoute>
-            ),
-          },
+          // protect('inventory', ["owner", "admin", "inventory_manager"], '/inventory', <InventoryDashboardPage />),
+          protect('inventory', ["owner", "admin", "inventory_manager"], '/inventory/dashboard', <InventoryDashboardPage />),
           {
             path: 'inventory/categories',
             element: (
@@ -135,84 +130,20 @@ const router = createBrowserRouter([
             ),
           },
 
-          // // HR Section
-
-          // {
-          //   path: 'hr/employees',
-          //   element: (
-          //     <ProtectedRoute requiredResource="employees">
-          //       <EmployeesPage />
-          //     </ProtectedRoute>
-          //   ),
-          // },
-          // {
-          //   path: 'hr/attendance',
-          //   element: (
-          //     <ProtectedRoute requiredResource="attendance">
-          //       <AttendancePage />
-          //     </ProtectedRoute>
-          //   ),
-          // },
-          // {
-          //   path: 'hr/leave-requests',
-          //   element: (
-          //     <ProtectedRoute requiredResource="leave_requests">
-          //       <LeaveRequestsPage />
-          //     </ProtectedRoute>
-          //   ),
-          // },
-          // {
-          //   path: 'hr/payroll',
-          //   element: (
-          //     <ProtectedRoute requiredResource="payroll">
-          //       <PayrollPage />
-          //     </ProtectedRoute>
-          //   ),
-          // },
-
+          // HR Section
           protect("employees", ["owner", "admin", "hr_manager"], "hr/employees", <EmployeesPage />),
           protect("attendance", ["owner", "admin", "hr_manager"], "hr/attendance", <AttendancePage />),
           protect("leave_requests", ["owner", "admin", "hr_manager"], "hr/leave-requests", <LeaveRequestsPage />),
           protect("payroll", ["owner", "admin", "hr_manager"], "hr/payroll", <PayrollPage />),
 
           // Sales Section
-          {
-            path: 'sales/orders',
-            element: (
-              <ProtectedRoute requiredResource="sales_orders">
-                <SalesOrdersPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'sales/customers',
-            element: (
-              <ProtectedRoute requiredResource="customers">
-                <CustomersPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'sales/returns',
-            element: (
-              <ProtectedRoute requiredResource="returns">
-                <ReturnsPage />
-              </ProtectedRoute>
-            ),
-          },
+          protect('sales', ["owner", "admin", "sales_manager"], '/sales/orders', <SalesOrdersPage />),
+          protect('customers', ["owner", "admin", "sales_manager"], '/sales/customers', <CustomersPage />),
+          protect('returns', ["owner", "admin", "sales_manager"], '/sales/returns', <ReturnsPage />),
 
           // Admin Section
-          protect("users", ["owner", "admin"], "admin/roles", <RolesPermissionsPage />),
-          
-          
-          // Admin Section
-        
-protect(
-  "activity_logs",
-  null,
-  "admin/activity-logs",
-  <Placeholder title="Activity Logs" />
-),        ],
+          protect("users", ["owner", "admin"], "admin/roles", <RolesPermissionsPage />), 
+        ],
       },
     ],
   },

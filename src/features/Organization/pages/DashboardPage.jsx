@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../../store/auth.store';
 import Chart from 'react-apexcharts';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,21 +9,103 @@ import {
 import StatCard from '../components/StatCard';
 import ShortcutCard from '../components/ShortcutCard';
 import { QuickActions } from '../constants/dashboard.constants';
+import axiosInstance from '../../../api/client'; 
 
 function DashboardPage() {
   const { user } = useAuthStore();
+  
+  // ── حالات البيانات (States) ──
+  const [kpis, setKpis] = useState({
+    totalRevenue: 0,
+    activeEmployees: 0,
+    pendingOrdersCount: 0,
+    lowStockCount: 0,
+  });
+  const [chartData, setChartData] = useState({ categories: [], series: [] });
+  const [selectedYear, setSelectedYear] = useState('2026'); // الباك إند شغال في عام 2026
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  console.log("user: ", user);
+  // ── جلب البيانات الحقيقية من FastAPI ──
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // 1. جلب المبيعات (Sales Orders)
+        const salesResponse = await axiosInstance.get('/sales-orders/');
+        // استخراج المصفوفة الحقيقية من داخل حقل items لمنع ايرور الـ reduce
+        const orders = salesResponse.data?.items || [];
 
-  // ── إعدادات الرسم البياني (ApexCharts Configuration) ──
+        // 2. جلب الموظفين لمعرفة عددهم الإجمالي
+        const employeesResponse = await axiosInstance.get('/employees/');
+        const employeesList = employeesResponse.data || [];
+        const totalEmployees = Array.isArray(employeesList) ? employeesList.length : (employeesList.items?.length || 0);
+
+        // 3. جلب النواقص من المخزن
+        const lowStockResponse = await axiosInstance.get('/inventory/stock/low');
+        const lowStockItems = lowStockResponse.data || [];
+
+        // ── معالجة البيانات لحساب الـ KPIs ──
+        
+        // حساب إجمالي الأرباح من الطلبات (يمكنك تصفية الطلبات التي ليست مسودة "draft" إذا أردت)
+        const totalRevenue = orders.reduce((sum, order) => {
+          return sum + (Number(order.total_amount) || 0);
+        }, 0);
+
+        // حساب عدد الطلبات المعلقة (المسودة draft أو pending حسب الحالات عندك)
+        const pendingOrders = orders.filter(order => {
+          const status = order.status?.toLowerCase();
+          return status === 'pending' || status === 'draft';
+        }).length;
+
+        setKpis({
+          totalRevenue: totalRevenue,
+          activeEmployees: totalEmployees,
+          pendingOrdersCount: pendingOrders,
+          lowStockCount: lowStockItems.length
+        });
+
+        // ── معالجة بيانات الرسم البياني (توزيع الإيرادات على الشهور) ──
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyRevenue = Array(12).fill(0);
+
+        orders.forEach(order => {
+          const orderDateStr = order.created_at;
+          if (orderDateStr) {
+            const date = new Date(orderDateStr);
+            if (date.getFullYear().toString() === selectedYear) {
+              const monthIndex = date.getMonth(); // 0 - 11
+              monthlyRevenue[monthIndex] += (Number(order.total_amount) || 0) / 1000; // بالـ k$
+            }
+          }
+        });
+
+        setChartData({
+          categories: months.slice(0, 12), // عرض الـ 12 شهر بالكامل ديناميكيًا
+          series: monthlyRevenue.slice(0, 12)
+        });
+
+      } catch (err) {
+        console.error("Error loading dashboard data:", err);
+        setError("Failed to sync with system servers. Please check your local server (FastAPI) status.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [selectedYear]);
+
+  // ── إعدادات الرسم البياني (ApexCharts) ──
   const chartOptions = {
     chart: {
       type: 'area',
       fontFamily: 'inherit',
-      toolbar: { show: false }, // إخفاء أدوات التحميل والزوم لشكل أنظف
+      toolbar: { show: false },
       zoom: { enabled: false }
     },
-    colors: ['#3b82f6'], // لون الخط (أزرق متوافق مع Tailwind blue-500)
+    colors: ['#3b82f6'],
     fill: {
       type: 'gradient',
       gradient: {
@@ -33,22 +116,22 @@ function DashboardPage() {
       }
     },
     dataLabels: { enabled: false },
-    stroke: { curve: 'smooth', width: 3 }, // خط منحني وناعم
+    stroke: { curve: 'smooth', width: 3 },
     xaxis: {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+      categories: chartData.categories.length > 0 ? chartData.categories : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       axisBorder: { show: false },
       axisTicks: { show: false },
-      labels: { style: { colors: '#64748b' } } // لون الخطوط السفلية
+      labels: { style: { colors: '#64748b' } }
     },
     yaxis: {
       labels: {
         style: { colors: '#64748b' },
-        formatter: (value) => `$${value}k` // تنسيق الأرقام كعملة
+        formatter: (value) => `$${value.toFixed(1)}k`
       }
     },
     grid: {
       borderColor: '#f1f5f9',
-      strokeDashArray: 4, // خطوط شبكة متقطعة لشكل عصري
+      strokeDashArray: 4,
       yaxis: { lines: { show: true } },
       xaxis: { lines: { show: false } },
     },
@@ -58,9 +141,35 @@ function DashboardPage() {
   const chartSeries = [
     {
       name: 'Revenue',
-      data: [30, 40, 35, 50, 49, 70, 90] // البيانات الوهمية
+      data: chartData.series.length > 0 ? chartData.series : Array(12).fill(0)
     }
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <p className="text-slate-500 text-sm">Fetching real-time dashboard analytics...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4 text-center p-6 bg-white rounded-2xl border border-slate-100 shadow-sm max-w-lg mx-auto">
+        <p className="text-rose-500 font-semibold text-lg">Backend Unreachable</p>
+        <p className="text-slate-500 text-sm">
+          Please make sure your FastAPI local server is running on <code className="bg-slate-100 px-1 py-0.5 rounded text-rose-600">http://127.0.0.1:8000</code> and CORS is enabled.
+        </p>
+        <button 
+          onClick={() => setSelectedYear(selectedYear)}
+          className="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition"
+        >
+          Try Reloading
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -88,8 +197,8 @@ function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Total Revenue" 
-          value="$124,500" 
-          trend="+12.5%" 
+          value={`$${kpis.totalRevenue.toLocaleString()}`} 
+          trend="Live data" 
           trendUp={true}
           icon={faDollarSign} 
           colorClass="bg-blue-50"
@@ -97,8 +206,8 @@ function DashboardPage() {
         />
         <StatCard 
           title="Active Employees" 
-          value="142" 
-          trend="+3 New" 
+          value={kpis.activeEmployees.toString()} 
+          trend="Total active" 
           trendUp={true}
           icon={faUsers} 
           colorClass="bg-indigo-50"
@@ -106,8 +215,8 @@ function DashboardPage() {
         />
         <StatCard 
           title="Pending Orders" 
-          value="28" 
-          trend="-5%" 
+          value={kpis.pendingOrdersCount.toString()} 
+          trend="Awaiting process" 
           trendUp={false}
           icon={faCartShopping} 
           colorClass="bg-amber-50"
@@ -115,8 +224,8 @@ function DashboardPage() {
         />
         <StatCard 
           title="Low Stock Items" 
-          value="12" 
-          trend="Needs attention" 
+          value={kpis.lowStockCount.toString()} 
+          trend={kpis.lowStockCount > 0 ? "Needs attention" : "Stock healthy"} 
           trendUp={false}
           icon={faCircleExclamation} 
           colorClass="bg-rose-50"
@@ -134,13 +243,16 @@ function DashboardPage() {
               <FontAwesomeIcon icon={faChartLine} className="text-blue-500" />
               Revenue Overview
             </h3>
-            <select className="text-sm border-slate-200 rounded-md text-slate-600 bg-slate-50 px-2 py-1 outline-none">
-              <option>This Year</option>
-              <option>Last Year</option>
+            <select 
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="text-sm border-slate-200 rounded-md text-slate-600 bg-slate-50 px-2 py-1 outline-none cursor-pointer"
+            >
+              <option value="2026">This Year (2026)</option>
+              <option value="2025">Last Year (2025)</option>
             </select>
           </div>
           
-          {/* مكون الرسم البياني هنا */}
           <div className="w-full h-72">
             <Chart 
               options={chartOptions} 
@@ -150,8 +262,6 @@ function DashboardPage() {
             />
           </div>
         </div>
-      
-
 
         {/* ── اختصارات سريعة (Quick Shortcuts) ── */}
         <div className="space-y-4">
@@ -168,8 +278,8 @@ function DashboardPage() {
           ))}
           <ShortcutCard 
             title="Approve Leaves" 
-            desc="4 requests pending" 
-            link="/hr/leave-requests" 
+            desc="Review active requests" 
+            link="/leave-requests" 
             icon={faUsers}
             bgHover="hover:border-indigo-200 hover:bg-indigo-50/50"
           />
@@ -183,16 +293,9 @@ function DashboardPage() {
           <ShortcutCard 
             title="Sales Orders" 
             desc="View recent transactions" 
-            link="/sales/orders" 
+            link="/sales-orders" 
             icon={faCartShopping}
             bgHover="hover:border-emerald-200 hover:bg-emerald-50/50"
-          />
-          <ShortcutCard 
-            title="System Roles" 
-            desc="Manage permissions" 
-            link="/admin/roles" 
-            icon={faCircleExclamation}
-            bgHover="hover:border-rose-200 hover:bg-rose-50/50"
           />
         </div>
 

@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faBars } from '@fortawesome/free-solid-svg-icons';
 import UserAvatar from '../features/Organization/components/UserAvatar';
 
 /**
@@ -35,25 +35,35 @@ function BellIcon() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Topbar
 // ─────────────────────────────────────────────────────────────────────────────
-export default function Topbar() {
+export default function Topbar({ onToggleSidebar }) {
   const { pathname } = useLocation();
   const { user, permissions } = useAuthStore();
 
   const page = PAGE_TITLES[pathname] ?? { title: 'ERP System', module: null };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-100 px-6 flex items-center justify-between shrink-0">
+    <header className="h-16 bg-white border-b border-slate-100 px-4 md:px-6 flex items-center justify-between shrink-0">
 
-      {/* Left: breadcrumb-style page title */}
-      <div>
-        {page.module && (
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider leading-none mb-0.5">
-            {page.module}
-          </p>
-        )}
-        <h1 className="text-base font-semibold text-slate-900 leading-none">
-          {page.title}
-        </h1>
+      {/* Left: Menu toggle button + breadcrumb-style page title */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onToggleSidebar}
+          aria-label="Toggle Sidebar"
+          className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+        >
+          <FontAwesomeIcon icon={faBars} className="w-5 h-5" />
+        </button>
+
+        <div>
+          {page.module && (
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider leading-none mb-0.5">
+              {page.module}
+            </p>
+          )}
+          <h1 className="text-base font-semibold text-slate-900 leading-none">
+            {page.title}
+          </h1>
+        </div>
       </div>
 
       {/* Right: notification bell + user chip */}
